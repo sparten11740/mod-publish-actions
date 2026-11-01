@@ -66,3 +66,7 @@ Each action's `action.yml` documents its inputs and outputs.
 ## Development
 
 See [AGENTS.md](AGENTS.md) for commands and conventions.
+
+## License
+
+[MIT](LICENSE)

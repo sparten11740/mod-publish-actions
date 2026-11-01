@@ -1,6 +1,7 @@
 {
   "name": "mod-publish-actions",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "node scripts/build-actions.ts",
