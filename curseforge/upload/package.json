@@ -1,0 +1,9 @@
+{
+  "name": "@mod-publish-actions/curseforge-upload",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@mod-publish-actions/core": "workspace:*"
+  }
+}

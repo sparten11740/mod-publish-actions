@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 
-const ACTIONS: string[] = [];
+const ACTIONS = ['curseforge/upload'];
 
 await Promise.all(
   ACTIONS.map((action) =>

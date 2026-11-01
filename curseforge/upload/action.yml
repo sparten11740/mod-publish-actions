@@ -1,0 +1,45 @@
+name: Upload to CurseForge
+description: Upload a mod file to a CurseForge project
+inputs:
+  token:
+    description: CurseForge API token
+    required: true
+  project-id:
+    description: Numeric CurseForge project ID
+    required: true
+  file:
+    description: Path or glob that matches exactly one file
+    required: true
+  game-versions:
+    description: Game versions the file supports, separated by commas or new lines
+    required: true
+  loaders:
+    description: Mod loaders the file supports, separated by commas or new lines
+    required: true
+  environment:
+    description: Where the mod runs, one of client, server or both
+    required: true
+  release-type:
+    description: One of alpha, beta or release
+    required: true
+  changelog:
+    description: Changelog in Markdown. Set this or changelog-file
+    required: false
+  changelog-file:
+    description: Path to a Markdown changelog. Set this or changelog
+    required: false
+  display-name:
+    description: Name shown on CurseForge instead of the file name
+    required: false
+  dependencies:
+    description: Entries of project-slug:type, separated by commas or new lines. Types are required, optional, embedded and incompatible
+    required: false
+  java-versions:
+    description: Java versions the file supports, separated by commas or new lines
+    required: false
+outputs:
+  file-id:
+    description: ID of the uploaded file
+runs:
+  using: node24
+  main: dist/index.cjs
