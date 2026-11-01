@@ -1,4 +1,4 @@
-import { getInput, setFailed } from '@actions/core';
+import { getInput, setFailed, setSecret } from '@actions/core';
 import { readFileSync } from 'node:fs';
 
 import { parseChoice, parseDependencies, parseList } from './parse';
@@ -27,6 +27,15 @@ function getRequired(name: string): string {
   return getInput(name, { required: true });
 }
 
+export function readToken(): string {
+  const token = getRequired('token');
+  if (/[\r\n]/.test(token)) {
+    throw new Error('token must be a single line, so check the secret it comes from');
+  }
+  setSecret(token);
+  return token;
+}
+
 export function readChangelog(changelog: string, changelogFile: string): string {
   if (changelog !== '' && changelogFile !== '') {
     throw new Error('Set changelog or changelog-file, not both');
@@ -42,7 +51,7 @@ export function readChangelog(changelog: string, changelogFile: string): string 
 
 export function readUploadInputs(): UploadInputs {
   return {
-    token: getRequired('token'),
+    token: readToken(),
     projectId: getRequired('project-id'),
     file: getRequired('file'),
     gameVersions: parseList(getRequired('game-versions')),

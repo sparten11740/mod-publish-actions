@@ -19575,6 +19575,9 @@ var ExitCode;
   ExitCode2[ExitCode2["Success"] = 0] = "Success";
   ExitCode2[ExitCode2["Failure"] = 1] = "Failure";
 })(ExitCode || (ExitCode = {}));
+function setSecret(secret) {
+  issueCommand("add-mask", {}, secret);
+}
 function getInput(name, options) {
   const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
   if (options && options.required && !val) {
@@ -19628,6 +19631,14 @@ var RELEASE_TYPES = ["alpha", "beta", "release"];
 function getRequired(name) {
   return getInput(name, { required: true });
 }
+function readToken() {
+  const token = getRequired("token");
+  if (/[\r\n]/.test(token)) {
+    throw new Error("token must be a single line, so check the secret it comes from");
+  }
+  setSecret(token);
+  return token;
+}
 function readChangelog(changelog, changelogFile) {
   if (changelog !== "" && changelogFile !== "") {
     throw new Error("Set changelog or changelog-file, not both");
@@ -19642,7 +19653,7 @@ function readChangelog(changelog, changelogFile) {
 }
 function readUploadInputs() {
   return {
-    token: getRequired("token"),
+    token: readToken(),
     projectId: getRequired("project-id"),
     file: getRequired("file"),
     gameVersions: parseList(getRequired("game-versions")),

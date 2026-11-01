@@ -3,8 +3,37 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { readChangelog, readUploadInputs } from './action';
+import { readChangelog, readToken, readUploadInputs } from './action';
 import { stubInputs, VALID_UPLOAD_INPUTS } from './testing';
+
+describe('readToken', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('returns the token and masks it in the logs', () => {
+    const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    stubInputs({ token: 'secret-token' });
+
+    expect(readToken()).toBe('secret-token');
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('::add-mask::secret-token'));
+  });
+
+  it('rejects a token spanning several lines, without repeating it', () => {
+    stubInputs({ token: 'first-part\nsecond-part' });
+
+    expect(() => readToken()).toThrow('token must be a single line');
+    expect(() => readToken()).not.toThrow('first-part');
+    expect(() => readToken()).not.toThrow('second-part');
+  });
+
+  it('requires a token', () => {
+    stubInputs({ token: '' });
+
+    expect(() => readToken()).toThrow('token');
+  });
+});
 
 describe('readChangelog', () => {
   it('returns inline text', () => {

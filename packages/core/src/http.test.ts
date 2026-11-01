@@ -78,6 +78,16 @@ describe('sendRequest', () => {
     await expect(sendRequest(URL_UNDER_TEST, { method: 'GET' })).rejects.toThrow(`GET ${URL_UNDER_TEST} failed:`);
   });
 
+  it('does not report the numeric code of a timeout as an error code', async () => {
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(AbortSignal.abort(new DOMException('The operation timed out', 'TimeoutError')));
+    server.use(http.get(URL_UNDER_TEST, () => new HttpResponse('ok')));
+
+    const failure = await sendRequest(URL_UNDER_TEST, { method: 'GET' }).catch((error: unknown) => String(error));
+
+    expect(failure).toContain('TimeoutError');
+    expect(failure).not.toMatch(/\(\d+\)/);
+  });
+
   it('keeps the error code of a real connection failure', async () => {
     const url = await findClosedPortUrl();
     server.use(http.get(url, () => passthrough()));

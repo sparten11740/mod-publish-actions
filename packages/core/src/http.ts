@@ -17,7 +17,7 @@ export type HttpReply = {
 
 function describeFailure(error: unknown): string {
   const reason = error instanceof Error ? (error.cause ?? error) : error;
-  const code = reason instanceof Object && 'code' in reason ? ` (${String(reason.code)})` : '';
+  const code = reason instanceof Object && 'code' in reason && typeof reason.code === 'string' ? ` (${reason.code})` : '';
   return `${String(reason)}${code}`;
 }
 

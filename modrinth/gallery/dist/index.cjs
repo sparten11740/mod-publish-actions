@@ -19582,6 +19582,9 @@ var ExitCode;
   ExitCode2[ExitCode2["Success"] = 0] = "Success";
   ExitCode2[ExitCode2["Failure"] = 1] = "Failure";
 })(ExitCode || (ExitCode = {}));
+function setSecret(secret) {
+  issueCommand("add-mask", {}, secret);
+}
 function getInput(name, options) {
   const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
   if (options && options.required && !val) {
@@ -19618,6 +19621,17 @@ function info(message) {
 }
 
 // packages/core/src/action.ts
+function getRequired(name) {
+  return getInput(name, { required: true });
+}
+function readToken() {
+  const token = getRequired("token");
+  if (/[\r\n]/.test(token)) {
+    throw new Error("token must be a single line, so check the secret it comes from");
+  }
+  setSecret(token);
+  return token;
+}
 async function runAction(action) {
   try {
     await action();
@@ -25486,7 +25500,7 @@ var REQUEST_TIMEOUT_MILLISECONDS = 3e5;
 var MAX_REPORTED_BODY_LENGTH = 500;
 function describeFailure(error3) {
   const reason = error3 instanceof Error ? error3.cause ?? error3 : error3;
-  const code = reason instanceof Object && "code" in reason ? ` (${String(reason.code)})` : "";
+  const code = reason instanceof Object && "code" in reason && typeof reason.code === "string" ? ` (${reason.code})` : "";
   return `${String(reason)}${code}`;
 }
 function summarizeBody(text) {
@@ -25665,7 +25679,7 @@ function readImages(folder) {
 // modrinth/gallery/src/gallery.ts
 function readInputs() {
   return {
-    token: getInput("token", { required: true }),
+    token: readToken(),
     projectId: getInput("project-id", { required: true }),
     images: getInput("images", { required: true }),
     removeMissing: getBooleanInput("remove-missing", { required: true })
