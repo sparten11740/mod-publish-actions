@@ -2,7 +2,7 @@
 
 GitHub Actions for publishing Minecraft mods to CurseForge and Modrinth.
 
-**Status:** early development. `modrinth/upload` and `modrinth/gallery` are implemented but have not run against Modrinth yet. `curseforge/upload` validates its inputs, then fails with "not implemented" until its API calls are written.
+**Status:** early development. All three actions are implemented, but none has run against the real service yet.
 
 | Action              | Purpose                                       |
 | ------------------- | --------------------------------------------- |
@@ -57,6 +57,8 @@ Each action's `action.yml` documents its inputs and outputs.
 Re-running a job is safe in `modrinth/upload`: if `version-number` already exists for the same loaders and game versions, it uploads nothing, logs a warning and returns that version's ID. If the number exists for other loaders or game versions, the step fails, so give each file its own `version-number`.
 
 Until a project is public, Modrinth only shows its versions to a token with the `PROJECT_READ` and `VERSION_READ` scopes. Without them, a re-run can publish a duplicate.
+
+`curseforge/upload` has no such protection, because CurseForge's documented upload API can't list a project's files. **Re-running a job uploads every file again**, so after a partial failure, re-run only the failed jobs.
 
 ## Gallery sync
 
