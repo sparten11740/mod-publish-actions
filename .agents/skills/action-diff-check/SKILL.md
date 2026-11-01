@@ -37,16 +37,13 @@ git show :<file>
 
 ## 3. Run the gates
 
-When reviewing staged changes while other files have uncommitted changes, run the gates on a copy of the index, so they describe the commit rather than the working tree:
+For staged changes, run this by itself. It checks a copy of the staged files, so unstaged work can't affect the result:
 
 ```bash
-copy="$(mktemp -d)"
-git checkout-index --all --prefix="$copy/"
-cd "$copy"
-pnpm install --frozen-lockfile
+pnpm check:staged
 ```
 
-Then, in the copy or otherwise in the repository:
+For all uncommitted changes:
 
 ```bash
 pnpm check
@@ -55,8 +52,7 @@ pnpm build
 test "$before" = "$(shasum */*/dist/index.cjs)"
 ```
 
-- Every format, lint, type or test failure is a finding.
-- If the last command fails, the `dist/` under review is out of date, which is a finding. A build in the repository also refreshes it, so say so in the report.
+- Every format, lint, type or test failure is a finding, and so is a `dist/` that doesn't match the source. In the second form, `pnpm build` also refreshes `dist/`, so say so in the report.
 - Every folder with an `action.yml` must have a `dist/index.cjs`.
 - If `pnpm` isn't on `PATH`, locate it before giving up, because Node may come from nvm.
 

@@ -8,6 +8,7 @@ GitHub Actions for publishing mods to CurseForge and Modrinth, in one pnpm monor
 - `packages/modrinth`: the Modrinth API client that the Modrinth actions share.
 - `curseforge/upload`, `modrinth/upload`, `modrinth/gallery`: one action each, with `action.yml`, `src/index.ts` as the entry point and the bundled `dist/index.cjs`.
 - `scripts/build-actions.ts`: bundles every action with esbuild. A new action has to be added to its list.
+- `scripts/check-staged.ts`: runs the checks and build on a copy of the staged files, so a commit is checked on its own.
 - `.agents/skills`: skills in the agent-agnostic [Agent Skills](https://agentskills.io) format. Claude Code only documents `.claude/skills`, so each skill also needs a symlink there: `ln -s ../../.agents/skills/<name> .claude/skills/<name>`.
 
 ## Commands
@@ -21,6 +22,7 @@ pnpm typecheck
 pnpm test     # vitest
 pnpm check    # format:check + lint + typecheck + test
 pnpm build    # bundles every action into its dist/
+pnpm check:staged  # check + build on a copy of only the staged files
 ```
 
 ## Supply chain
@@ -62,6 +64,7 @@ Skills must work in any agent. Use only the standard frontmatter fields (`name`,
   - Body: what changed and why, wrapped at 72 columns. Mark a breaking change to an input or output with `!` after the type or a `BREAKING CHANGE:` footer.
 - **Commit atomically.** Each commit is one logical change, together with its tests, docs, lockfile changes and rebuilt `dist/`, and passes `pnpm check` and `pnpm build` on its own. Split unrelated changes into separate commits.
 - **Review before each commit.** Stage the change, run the `action-diff-check` skill on the staged changes, and fix every finding or consciously defer it before committing.
+- **Commit hook.** In Claude Code, `.claude/settings.json` has a separate agent run `action-diff-check` on the staged changes whenever `git commit` runs, and a Blocker or Should fix finding blocks the commit. Stage changes in a separate command first, and commit with a plain `git commit` rather than from a script, or the hook cannot review what will be committed. The reviewer can only run commands that have an allow rule, so `Bash(pnpm check:staged)` must be allowed or it blocks every commit. If it cannot finish, for example on a timeout, Claude Code lets the commit through.
 
 ## Definition of done
 

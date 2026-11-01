@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Bash(git *commit*)",
+            "model": "sonnet",
+            "timeout": 900,
+            "statusMessage": "A separate agent is reviewing this commit",
+            "prompt": "You are an independent reviewer. You did not write this code, and a commit is about to happen. The hook input is: $ARGUMENTS\n\nRun every command in the cwd from the hook input. Never edit, stage, commit or push anything, and never send a request that could publish anything.\n\nStep 1: if tool_input.command does not create a git commit, return ok true straight away.\n\nStep 2: if tool_input.command also stages files (git add, git rm, git mv, git commit -a, git commit --all or a commit with file paths), return ok false without reviewing, with the reason: Stage the changes in a separate command, then run git commit on its own, so the review sees exactly what will be committed.\n\nStep 3: if the repository has no .agents/skills/action-diff-check/SKILL.md at its top level, or nothing is staged, return ok true.\n\nStep 4: read .agents/skills/action-diff-check/SKILL.md and follow it for the staged changes only, including its scans. Run its gate by itself as exactly this command: pnpm check:staged. Be sceptical and report only concrete problems.\n\nStep 5: if pnpm check:staged was denied or could not run, return ok false with the reason: The review gate could not run, so allow Bash(pnpm check:staged) in the permissions in .claude/settings.json, then commit again. Otherwise return ok true if the gate passed and no Blocker or Should fix finding remains; nits alone pass. In every other case return ok false, with a reason listing each Blocker and Should fix finding as path:line, the problem and the suggested fix."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": ["Bash(pnpm check:staged)", "WebFetch(domain:docs.modrinth.com)", "WebFetch(domain:support.curseforge.com)"]
+  }
+}

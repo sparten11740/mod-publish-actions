@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-actions.ts",
+    "check:staged": "node scripts/check-staged.ts",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint",
