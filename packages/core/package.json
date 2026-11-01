@@ -7,6 +7,7 @@
     "./testing": "./src/testing.ts"
   },
   "dependencies": {
-    "@actions/core": "^3.0.1"
+    "@actions/core": "^3.0.1",
+    "zod": "^4.6.7"
   }
 }

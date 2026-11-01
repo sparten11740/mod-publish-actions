@@ -4,10 +4,8 @@ import { basename } from 'node:path';
 
 import { findSingleFile, readUploadInputs } from '@mod-publish-actions/core';
 import type { UploadInputs } from '@mod-publish-actions/core';
+import { findVersionId, getProjectId, MODRINTH_API_URL, postVersion } from '@mod-publish-actions/modrinth';
 
-import { findVersionId, getProjectId, postVersion } from './modrinth-api';
-
-const API_URL = 'https://api.modrinth.com/v2';
 const FILE_PART = 'file';
 
 const ENVIRONMENTS: Record<UploadInputs['environment'], string> = {
@@ -63,7 +61,7 @@ export async function publishVersion(inputs: ModrinthUploadInputs, apiUrl: strin
 }
 
 export async function uploadVersion(): Promise<void> {
-  const versionId = await publishVersion(readInputs(), API_URL);
+  const versionId = await publishVersion(readInputs(), MODRINTH_API_URL);
   setOutput('version-id', versionId);
   info(`Modrinth version ID: ${versionId}`);
 }

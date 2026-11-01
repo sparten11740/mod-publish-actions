@@ -246,21 +246,6 @@ describe('publishVersion', () => {
     expect(failure).not.toContain(TOKEN);
   });
 
-  it('shortens a long error page in the failure message', async () => {
-    stubFetch(() => new Response(`<!doctype html>${'x'.repeat(5000)}`, { status: 524 }));
-
-    const failure = await publishVersion(createInputs(), API_URL).catch((error: unknown) => String(error));
-
-    expect(failure).toContain('failed with status 524: <!doctype html>');
-    expect(failure.length).toBeLessThan(700);
-  });
-
-  it('says how long to wait when rate limited', async () => {
-    stubFetch(() => new Response('', { status: 429, headers: { 'X-Ratelimit-Reset': '42' } }));
-
-    await expect(publishVersion(createInputs(), API_URL)).rejects.toThrow(`POST ${UPLOAD_URL} was rate limited, try again in 42 seconds`);
-  });
-
   it.each([
     ['is not JSON', 'Bad Gateway'],
     ['has no ID', '{"name":"1.0.0"}'],
@@ -268,38 +253,7 @@ describe('publishVersion', () => {
   ])('rejects a successful response that %s', async (_description, body) => {
     stubFetch(() => new Response(body));
 
-    await expect(publishVersion(createInputs(), API_URL)).rejects.toThrow('returned a response without an ID');
-  });
-
-  it('names the request when the response cannot be read', async () => {
-    stubFetch(
-      () =>
-        new Response(
-          new ReadableStream({
-            start(controller) {
-              controller.error(new Error('terminated'));
-            },
-          }),
-        ),
-    );
-
-    await expect(publishVersion(createInputs(), API_URL)).rejects.toThrow(`POST ${UPLOAD_URL} failed: Error: terminated`);
-  });
-
-  it('names the request when the network fails', async () => {
-    vi.stubGlobal('fetch', async () => {
-      throw new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND') });
-    });
-
-    await expect(publishVersion(createInputs(), API_URL)).rejects.toThrow(`GET ${VERSION_LOOKUP_URL} failed: Error: getaddrinfo ENOTFOUND`);
-  });
-
-  it('keeps the error code when a network failure has no message of its own', async () => {
-    vi.stubGlobal('fetch', async () => {
-      throw new TypeError('fetch failed', { cause: Object.assign(new AggregateError([]), { code: 'ECONNREFUSED' }) });
-    });
-
-    await expect(publishVersion(createInputs(), API_URL)).rejects.toThrow('ECONNREFUSED');
+    await expect(publishVersion(createInputs(), API_URL)).rejects.toThrow('returned an unexpected response');
   });
 });
 

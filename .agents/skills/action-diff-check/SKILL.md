@@ -65,6 +65,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 - **Comments:** `//` and `/* */` in TypeScript, and `#` in YAML. The only allowed comments are tool directives and the version comment after a pinned action.
 - **Type escapes:** `as X` (except `as const`), non-null `!`, `any`, `@ts-ignore`, `@ts-expect-error`.
 - **`null`:** use `undefined`.
+- **Unparsed data:** `response.json()`, or `JSON.parse` whose result does not go straight into a `zod/v4` schema.
 - **Leftovers:** `console.*` (use `@actions/core` logging), `TODO`/`FIXME`, commented-out code, `.only`, `.skip`, real tokens or keys.
 - **Commands:** `exec`, `execSync` or `promisify(exec)` from `node:child_process`, `shell: true`, and any variable inside the command line string passed to `@actions/exec`.
 - **Action references:** every `uses:` is a full 40-character commit SHA followed by its version in a comment.
@@ -115,7 +116,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 **Package boundaries**
 
 - `packages/core` holds only what several actions share, and knows nothing about any platform.
-- Platform knowledge stays in its action, and actions never import each other.
+- Platform knowledge stays in that platform's package, such as `packages/modrinth`, or in its action, and actions never import each other.
 - Actions import core through `@mod-publish-actions/core`, never through relative paths into another package.
 - `@mod-publish-actions/core/testing` is imported only by tests, and neither it nor `vitest` reaches `dist/`.
 - Logic repeated in two actions moves to core once it is the same concept, not merely similar code.
@@ -153,7 +154,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 
 **Types**
 
-- API responses stay `unknown` until a typed parser narrows them, rather than being cast.
+- Data from outside TypeScript is parsed where it enters the program, so the code inside trusts its types without re-checking or casting. Server responses go through a `zod/v4` schema with `parseReply`, and schemas follow the official docs, including nullable fields.
 - Precise unions over loose `string`, derived from one source such as `(typeof CHOICES)[number]`.
 - `type` aliases rather than `interface`.
 - No optional parameters that every caller passes.

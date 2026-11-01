@@ -4,7 +4,8 @@ GitHub Actions for publishing mods to CurseForge and Modrinth, in one pnpm monor
 
 ## Layout
 
-- `packages/core`: code shared between actions (input parsing, running an action). `@mod-publish-actions/core/testing` holds test helpers and is never imported by action code.
+- `packages/core`: code shared between actions (input parsing, HTTP, running an action). `@mod-publish-actions/core/testing` holds test helpers and is never imported by action code.
+- `packages/modrinth`: the Modrinth API client that the Modrinth actions share.
 - `curseforge/upload`, `modrinth/upload`, `modrinth/gallery`: one action each, with `action.yml`, `src/index.ts` as the entry point and the bundled `dist/index.cjs`.
 - `scripts/build-actions.ts`: bundles every action with esbuild. A new action has to be added to its list.
 - `.agents/skills`: skills in the agent-agnostic [Agent Skills](https://agentskills.io) format. Claude Code only documents `.claude/skills`, so each skill also needs a symlink there: `ln -s ../../.agents/skills/<name> .claude/skills/<name>`.
@@ -35,6 +36,7 @@ pnpm build    # bundles every action into its dist/
 - **Keep the inputs stable.** Inputs are the public API and tags cover the whole repository. Adding an optional input is fine; renaming or removing one is a breaking change.
 - **Same concept, same input.** Inputs that mean the same thing use the same name and values on every platform, and each action translates them for its API. Platform-only inputs live in that action.
 - **Fail loudly.** Throw an `Error` with a message naming the input or file at fault. `runAction` turns it into a failed step.
+- **Parse at the boundary.** Data from outside TypeScript is parsed where it enters the program, so the types inside it can be trusted without re-checking or casting. Server responses go through a `zod/v4` schema with `parseReply`, and action inputs through `readInputs`.
 
 ## Skills
 
@@ -55,7 +57,7 @@ Skills must work in any agent. Use only the standard frontmatter fields (`name`,
 
 - **Conventional Commits.** Messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): subject`, for example `fix(modrinth-upload): send the User-Agent header`.
   - Types: `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `build`, `ci`, `chore`, `revert`.
-  - Scopes: `core`, `curseforge-upload`, `modrinth-upload`, `modrinth-gallery`, left out for changes across the repository.
+  - Scopes: `core`, `modrinth`, `curseforge-upload`, `modrinth-upload`, `modrinth-gallery`, left out for changes across the repository.
   - Subject: imperative, lower case, no trailing period, about 70 characters at most.
   - Body: what changed and why, wrapped at 72 columns. Mark a breaking change to an input or output with `!` after the type or a `BREAKING CHANGE:` footer.
 - **Commit atomically.** Each commit is one logical change, together with its tests, docs, lockfile changes and rebuilt `dist/`, and passes `pnpm check` and `pnpm build` on its own. Split unrelated changes into separate commits.

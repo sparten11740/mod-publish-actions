@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "@actions/core": "^3.0.1",
-    "@mod-publish-actions/core": "workspace:*"
+    "@mod-publish-actions/core": "workspace:*",
+    "@mod-publish-actions/modrinth": "workspace:*"
   }
 }

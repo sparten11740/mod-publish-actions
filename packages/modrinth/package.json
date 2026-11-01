@@ -1,0 +1,12 @@
+{
+  "name": "@mod-publish-actions/modrinth",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/api.ts"
+  },
+  "dependencies": {
+    "@mod-publish-actions/core": "workspace:*",
+    "zod": "^4.6.7"
+  }
+}
