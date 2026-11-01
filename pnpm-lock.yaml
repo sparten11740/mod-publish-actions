@@ -194,6 +194,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
 
+  modrinth/upload:
+    dependencies:
+      '@actions/core':
+        specifier: ^3.0.1
+        version: 3.0.1
+      '@mod-publish-actions/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+
   packages/core:
     dependencies:
       '@actions/core':
