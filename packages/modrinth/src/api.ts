@@ -34,7 +34,7 @@ export type ExistingVersion = zod.infer<typeof EXISTING_VERSION_SCHEMA>;
 
 export type GalleryImage = zod.infer<typeof GALLERY_IMAGE_SCHEMA>;
 
-export type NewGalleryImage = {
+type NewGalleryImage = {
   bytes: Uint8Array<ArrayBuffer>;
   extension: string;
   contentType: string;

@@ -1,7 +1,7 @@
-import { mkdirSync, mkdtempSync, truncateSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, symlinkSync, truncateSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { readImages } from './images';
 
@@ -52,6 +52,23 @@ describe('readImages', () => {
     mkdirSync(join(folder, 'nested.png'));
 
     expect(readImages(folder).map(({ title }) => title)).toEqual(['Crater']);
+  });
+
+  it('warns about the entries it skips, including folders and symlinks', () => {
+    const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    const folder = createFolder('crater.png', 'notes.txt');
+    mkdirSync(join(folder, 'nested'));
+    symlinkSync(join(folder, 'crater.png'), join(folder, 'linked.png'));
+
+    expect(readImages(folder).map(({ title }) => title)).toEqual(['Crater']);
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('linked.png, nested, notes.txt'));
+    vi.restoreAllMocks();
+  });
+
+  it('rejects a file name that gives an empty title', () => {
+    const folder = createFolder('01-crater.png', '02-.png');
+
+    expect(() => readImages(folder)).toThrow('give an empty title');
   });
 
   it('accepts an image of exactly 5 MiB', () => {

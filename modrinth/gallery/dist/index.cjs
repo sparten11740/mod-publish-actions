@@ -25632,18 +25632,18 @@ function toTitle(fileName) {
   const words = (0, import_node_path.parse)(fileName).name.replace(/^\d+[-_ ]+/, "").replaceAll(/[-_]+/g, " ").trim();
   return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
 }
-function listFileNames(folder) {
-  return (0, import_node_fs.readdirSync)(folder, { withFileTypes: true }).filter((entry) => entry.isFile() && !entry.name.startsWith(".")).map((entry) => entry.name).toSorted((first, second) => first.localeCompare(second, "en", { numeric: true }));
+function listEntries(folder) {
+  return (0, import_node_fs.readdirSync)(folder, { withFileTypes: true }).filter(({ name }) => !name.startsWith(".")).toSorted((first, second) => first.name.localeCompare(second.name, "en", { numeric: true }));
 }
 function selectImageNames(folder) {
   if ((0, import_node_fs.statSync)(folder, { throwIfNoEntry: false })?.isDirectory() !== true) {
     throw new Error(`images folder "${folder}" does not exist`);
   }
-  const fileNames = listFileNames(folder);
-  const imageNames = fileNames.filter((fileName) => CONTENT_TYPES.has(readExtension(fileName)));
-  const skipped = fileNames.filter((fileName) => !imageNames.includes(fileName));
+  const entries = listEntries(folder);
+  const imageNames = entries.filter((entry) => entry.isFile() && CONTENT_TYPES.has(readExtension(entry.name))).map(({ name }) => name);
+  const skipped = entries.filter(({ name }) => !imageNames.includes(name)).map(({ name }) => name);
   if (skipped.length > 0) {
-    warning(`Skipping files in ${folder} that Modrinth doesn't accept as images: ${skipped.join(", ")}`);
+    warning(`Skipping entries in ${folder} that are not image files Modrinth accepts: ${skipped.join(", ")}`);
   }
   if (imageNames.length === 0) {
     throw new Error(`images folder "${folder}" has no images`);
@@ -25656,7 +25656,11 @@ function assertWithinSizeLimit(folder, imageNames) {
     throw new Error(`Modrinth gallery images can be at most 5 MiB, but these in "${folder}" are larger: ${oversized.join(", ")}`);
   }
 }
-function assertUniqueTitles(images) {
+function assertUsableTitles(images) {
+  const untitled = images.filter(({ title }) => title === "").map(({ path }) => path);
+  if (untitled.length > 0) {
+    throw new Error(`Gallery titles come from file names, but these give an empty title: ${untitled.join(", ")}`);
+  }
   const titles = images.map(({ title }) => title);
   const repeated = titles.filter((title, index) => titles.indexOf(title) !== index);
   if (repeated.length > 0) {
@@ -25677,7 +25681,7 @@ function readImages(folder) {
       ordering: index
     };
   });
-  assertUniqueTitles(images);
+  assertUsableTitles(images);
   return images;
 }
 
@@ -25710,11 +25714,18 @@ async function applySync(inputs, apiUrl) {
   const local = readImages(inputs.images);
   const plan = planSync(local, await getGallery(apiUrl, token, projectId), inputs.removeMissing);
   const steps = [
-    ...plan.remove.map(
-      ({ url }) => () => deleteGalleryImage(apiUrl, token, projectId, url)
-    ),
-    ...plan.add.map((image) => async () => addGalleryImage(apiUrl, token, projectId, { ...image, bytes: await (0, import_promises.readFile)(image.path) })),
-    ...plan.modify.map((change) => () => modifyGalleryImage(apiUrl, token, projectId, change))
+    ...plan.remove.map(({ url, title }) => () => {
+      info(`Removing ${title ?? "an untitled image"}: ${url}`);
+      return deleteGalleryImage(apiUrl, token, projectId, url);
+    }),
+    ...plan.add.map((image) => async () => {
+      info(`Adding ${image.title}: ${image.path}`);
+      return addGalleryImage(apiUrl, token, projectId, { ...image, bytes: await (0, import_promises.readFile)(image.path) });
+    }),
+    ...plan.modify.map((change) => () => {
+      info(`Updating ${change.url}`);
+      return modifyGalleryImage(apiUrl, token, projectId, change);
+    })
   ];
   await steps.reduce((previous, step) => previous.then(step), Promise.resolve());
   return plan;

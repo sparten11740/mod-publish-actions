@@ -54,13 +54,18 @@ export async function applySync(inputs: GalleryInputs, apiUrl: string): Promise<
   const local = readImages(inputs.images);
   const plan = planSync(local, await getGallery(apiUrl, token, projectId), inputs.removeMissing);
   const steps = [
-    ...plan.remove.map(
-      ({ url }) =>
-        () =>
-          deleteGalleryImage(apiUrl, token, projectId, url),
-    ),
-    ...plan.add.map((image) => async () => addGalleryImage(apiUrl, token, projectId, { ...image, bytes: await readFile(image.path) })),
-    ...plan.modify.map((change) => () => modifyGalleryImage(apiUrl, token, projectId, change)),
+    ...plan.remove.map(({ url, title }) => () => {
+      info(`Removing ${title ?? 'an untitled image'}: ${url}`);
+      return deleteGalleryImage(apiUrl, token, projectId, url);
+    }),
+    ...plan.add.map((image) => async () => {
+      info(`Adding ${image.title}: ${image.path}`);
+      return addGalleryImage(apiUrl, token, projectId, { ...image, bytes: await readFile(image.path) });
+    }),
+    ...plan.modify.map((change) => () => {
+      info(`Updating ${change.url}`);
+      return modifyGalleryImage(apiUrl, token, projectId, change);
+    }),
   ];
 
   await steps.reduce((previous, step) => previous.then(step), Promise.resolve());

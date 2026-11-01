@@ -1,5 +1,6 @@
 import { warning } from '@actions/core';
 import { readdirSync, statSync } from 'node:fs';
+import type { Dirent } from 'node:fs';
 import { extname, join, parse } from 'node:path';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -37,22 +38,21 @@ function toTitle(fileName: string): string {
   return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
 }
 
-function listFileNames(folder: string): string[] {
+function listEntries(folder: string): Dirent[] {
   return readdirSync(folder, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && !entry.name.startsWith('.'))
-    .map((entry) => entry.name)
-    .toSorted((first, second) => first.localeCompare(second, 'en', { numeric: true }));
+    .filter(({ name }) => !name.startsWith('.'))
+    .toSorted((first, second) => first.name.localeCompare(second.name, 'en', { numeric: true }));
 }
 
 function selectImageNames(folder: string): string[] {
   if (statSync(folder, { throwIfNoEntry: false })?.isDirectory() !== true) {
     throw new Error(`images folder "${folder}" does not exist`);
   }
-  const fileNames = listFileNames(folder);
-  const imageNames = fileNames.filter((fileName) => CONTENT_TYPES.has(readExtension(fileName)));
-  const skipped = fileNames.filter((fileName) => !imageNames.includes(fileName));
+  const entries = listEntries(folder);
+  const imageNames = entries.filter((entry) => entry.isFile() && CONTENT_TYPES.has(readExtension(entry.name))).map(({ name }) => name);
+  const skipped = entries.filter(({ name }) => !imageNames.includes(name)).map(({ name }) => name);
   if (skipped.length > 0) {
-    warning(`Skipping files in ${folder} that Modrinth doesn't accept as images: ${skipped.join(', ')}`);
+    warning(`Skipping entries in ${folder} that are not image files Modrinth accepts: ${skipped.join(', ')}`);
   }
   if (imageNames.length === 0) {
     throw new Error(`images folder "${folder}" has no images`);
@@ -67,7 +67,11 @@ function assertWithinSizeLimit(folder: string, imageNames: string[]): void {
   }
 }
 
-function assertUniqueTitles(images: LocalImage[]): void {
+function assertUsableTitles(images: LocalImage[]): void {
+  const untitled = images.filter(({ title }) => title === '').map(({ path }) => path);
+  if (untitled.length > 0) {
+    throw new Error(`Gallery titles come from file names, but these give an empty title: ${untitled.join(', ')}`);
+  }
   const titles = images.map(({ title }) => title);
   const repeated = titles.filter((title, index) => titles.indexOf(title) !== index);
   if (repeated.length > 0) {
@@ -89,6 +93,6 @@ export function readImages(folder: string): LocalImage[] {
       ordering: index,
     };
   });
-  assertUniqueTitles(images);
+  assertUsableTitles(images);
   return images;
 }

@@ -180,6 +180,21 @@ describe('applySync', () => {
     expect(requests.some(({ method }) => method === 'PATCH')).toBe(false);
   });
 
+  it('logs each change before making it, so a later failure still leaves a record of what was removed', async () => {
+    const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    const folder = createFolder('crater.png');
+    const old = createRemoteImage('Old', 8, false);
+    mockModrinth([old], { failOn: 'POST' });
+
+    await expect(applySync({ token: TOKEN, projectId: 'my-mod', images: folder, removeMissing: true }, API_URL)).rejects.toThrow(
+      'failed with status 500',
+    );
+
+    expect(write).toHaveBeenCalledWith(expect.stringContaining(`Removing Old: ${old.url}`));
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('Adding Crater'));
+    vi.restoreAllMocks();
+  });
+
   it('sends the contents of the file', async () => {
     const folder = createFolder('crater.png');
     const requests = mockModrinth([]);
