@@ -2,7 +2,7 @@ import { build } from 'esbuild';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ACTIONS = ['curseforge/upload', 'modrinth/upload', 'modrinth/gallery'];
+const ACTIONS = ['curseforge/upload'];
 const PNPM_PACKAGE_PATH = /^(.*node_modules\/\.pnpm\/([^/]+)\/node_modules\/(@[^/]+\/[^/]+|[^/]+))\//;
 const LICENSE_FILE = /^licen[cs]e/i;
 const NOTICE_INTRODUCTION = 'This bundle contains code from the following packages, each under its own license.';

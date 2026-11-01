@@ -27,7 +27,7 @@ describe('findBundledPackages', () => {
   });
 
   it('ignores the repository’s own source files', () => {
-    expect(findBundledPackages(['packages/core/src/http.ts', 'modrinth/upload/src/index.ts'])).toEqual([]);
+    expect(findBundledPackages(['packages/core/src/http.ts', 'curseforge/upload/src/index.ts'])).toEqual([]);
   });
 });
 

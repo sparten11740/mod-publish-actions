@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["scripts", "packages/*/src", "curseforge/*/src", "modrinth/*/src"]
+  "include": ["scripts", "packages/*/src", "curseforge/*/src"]
 }

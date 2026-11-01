@@ -1,12 +1,12 @@
 # mod-publish-actions
 
-GitHub Actions for publishing mods to CurseForge and Modrinth, in one pnpm monorepo.
+GitHub Actions for publishing mods to CurseForge, in one pnpm monorepo.
 
 ## Layout
 
 - `packages/core`: code shared between actions (input parsing, HTTP, running an action). `@mod-publish-actions/core/testing` holds test helpers and is never imported by action code.
-- `packages/modrinth`: the Modrinth API client that the Modrinth actions share.
-- `curseforge/upload`, `modrinth/upload`, `modrinth/gallery`: one action each, with `action.yml`, `src/index.ts` as the entry point and the bundled `dist/index.cjs`.
+- `curseforge/upload`: an action, with `action.yml`, `src/index.ts` as the entry point and the bundled `dist/index.cjs`.
+- Branch `modrinth-actions`: holds `modrinth/upload`, `modrinth/gallery` and `packages/modrinth`. To add them back, revert the commit that removed them from `main`, then merge the branch.
 - `scripts/build-actions.ts`: bundles every action with esbuild and writes the license notices of the packages in each bundle to `dist/THIRD_PARTY_LICENSES.txt`. A new action has to be added to its list.
 - `scripts/check-staged.ts`: runs the checks and build on a copy of the staged files, so a commit is checked on its own.
 - `.agents/skills`: skills in the agent-agnostic [Agent Skills](https://agentskills.io) format. Claude Code only documents `.claude/skills`, so each skill also needs a symlink there: `ln -s ../../.agents/skills/<name> .claude/skills/<name>`.
@@ -59,9 +59,9 @@ Skills must work in any agent. Use only the standard frontmatter fields (`name`,
 
 ## Commits
 
-- **Conventional Commits.** Messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): subject`, for example `fix(modrinth-upload): send the User-Agent header`.
+- **Conventional Commits.** Messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): subject`, for example `fix(curseforge-upload): reject Java versions that are not plain numbers`.
   - Types: `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `build`, `ci`, `chore`, `revert`.
-  - Scopes: `core`, `modrinth`, `curseforge-upload`, `modrinth-upload`, `modrinth-gallery`, left out for changes across the repository.
+  - Scopes: `core`, `curseforge-upload`, left out for changes across the repository.
   - Subject: imperative, lower case, no trailing period, about 70 characters at most.
   - Body: what changed and why, wrapped at 72 columns. Mark a breaking change to an input or output with `!` after the type or a `BREAKING CHANGE:` footer.
 - **Commit atomically.** Each commit is one logical change, together with its tests, docs, lockfile changes and rebuilt `dist/`, and passes `pnpm check` and `pnpm build` on its own. Split unrelated changes into separate commits.

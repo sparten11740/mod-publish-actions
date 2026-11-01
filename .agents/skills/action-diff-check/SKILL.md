@@ -91,11 +91,8 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 - Only official, documented APIs are used. Private endpoints, captured dashboard traffic, scraping, browser sessions, and undocumented response fields or URL formats are a **Blocker**.
 - Check every endpoint, header and field against the current official docs rather than memory, and cite the page for any mismatch:
   - CurseForge: https://support.curseforge.com/en/support/solutions/articles/9000197321-curseforge-api
-  - Modrinth: https://docs.modrinth.com/api/
 - CurseForge: the token goes in the `X-Api-Token` header, never the `token` query parameter. Game versions, loaders, environments and Java versions all go in `gameVersionNames`, because telling duplicate version IDs apart needs an undocumented endpoint.
-- Modrinth: every request sends a uniquely identifying `User-Agent`. Tokens need only the scopes in use, which each `action.yml` lists. A rate limit response gives a failure message saying how long to wait, and is retried only when the request is safe to repeat.
 - Every network call has a timeout. Only safe requests are retried, because retrying an upload could publish it twice.
-- Gallery sync creates no duplicates on a re-run, deletes nothing unless `remove-missing` is true, fails before any request on an empty folder or files over Modrinth's 5 MiB limit, and leaves descriptions alone.
 
 **Security and supply chain**
 
@@ -113,7 +110,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 **Package boundaries**
 
 - `packages/core` holds only what several actions share, and knows nothing about any platform.
-- Platform knowledge stays in that platform's package, such as `packages/modrinth`, or in its action, and actions never import each other.
+- Platform knowledge stays in that platform's own package or action, and actions never import each other.
 - Actions import core through `@mod-publish-actions/core`, never through relative paths into another package.
 - `@mod-publish-actions/core/testing` is imported only by tests, and neither it nor `vitest` reaches `dist/`.
 - Logic repeated in two actions moves to core once it is the same concept, not merely similar code.

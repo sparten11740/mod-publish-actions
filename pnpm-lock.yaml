@@ -200,44 +200,11 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
-  modrinth/gallery:
-    dependencies:
-      '@actions/core':
-        specifier: ^3.0.1
-        version: 3.0.1
-      '@mod-publish-actions/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@mod-publish-actions/modrinth':
-        specifier: workspace:*
-        version: link:../../packages/modrinth
-
-  modrinth/upload:
-    dependencies:
-      '@actions/core':
-        specifier: ^3.0.1
-        version: 3.0.1
-      '@mod-publish-actions/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@mod-publish-actions/modrinth':
-        specifier: workspace:*
-        version: link:../../packages/modrinth
-
   packages/core:
     dependencies:
       '@actions/core':
         specifier: ^3.0.1
         version: 3.0.1
-      zod:
-        specifier: ^4.6.7
-        version: 4.6.7
-
-  packages/modrinth:
-    dependencies:
-      '@mod-publish-actions/core':
-        specifier: workspace:*
-        version: link:../core
       zod:
         specifier: ^4.6.7
         version: 4.6.7
