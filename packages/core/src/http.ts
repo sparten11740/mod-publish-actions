@@ -46,6 +46,7 @@ export async function sendRequest(url: string, { method, headers, body }: HttpRe
       method,
       headers: { ...headers, 'User-Agent': USER_AGENT },
       body,
+      redirect: 'manual',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS),
     });
     return { response, text: redactSecrets(await response.text(), headers) };

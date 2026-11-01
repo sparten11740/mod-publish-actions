@@ -63,6 +63,19 @@ describe('sendRequest', () => {
     expect(text).toBe('expected image/png');
   });
 
+  it('does not follow a redirect, so a token cannot reach another host', async () => {
+    const requests = recordRequests(server);
+    server.use(
+      http.post(URL_UNDER_TEST, () => new HttpResponse(undefined, { status: 302, headers: { Location: 'https://other.test/landing' } })),
+    );
+
+    const reply = await sendRequest(URL_UNDER_TEST, { method: 'POST', headers: { 'X-Api-Token': 'token' } });
+
+    expect(reply.response.status).toBe(302);
+    expect(requests.map(({ url }) => url)).toEqual([URL_UNDER_TEST]);
+    expect(() => assertSuccess(reply, URL_UNDER_TEST, 'POST')).toThrow(`POST ${URL_UNDER_TEST} failed with status 302`);
+  });
+
   it('sets a timeout on every request', async () => {
     const timeout = vi.spyOn(AbortSignal, 'timeout');
     server.use(http.get(URL_UNDER_TEST, () => new HttpResponse('ok')));
