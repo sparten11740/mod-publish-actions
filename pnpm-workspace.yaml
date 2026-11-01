@@ -1,0 +1,7 @@
+packages:
+  - packages/*
+  - curseforge/*
+  - modrinth/*
+allowBuilds:
+  esbuild: false
+minimumReleaseAge: 20160

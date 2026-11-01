@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 140,
+  "singleQuote": true,
+  "semi": true,
+  "trailingComma": "all",
+  "arrowParens": "always",
+  "sortImports": {
+    "groups": [
+      ["type-builtin", "builtin", "type-external", "external"],
+      ["type-internal", "internal"],
+      ["type-parent", "parent", "type-sibling", "sibling", "type-index", "index"],
+      "side_effect_style",
+      "unknown"
+    ],
+    "internalPattern": ["@mod-publish-actions/"],
+    "newlinesBetween": true
+  },
+  "ignorePatterns": ["**/dist/", "pnpm-lock.yaml"]
+}
