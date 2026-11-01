@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { parseChoice, parseDependencies, parseList } from './parse';
 import type { Dependency } from './parse';
 
+const LINE_BREAK = /[\r\n]/;
 const ENVIRONMENTS = ['client', 'server', 'both'] as const;
 const RELEASE_TYPES = ['alpha', 'beta', 'release'] as const;
 
@@ -41,7 +42,7 @@ function readRequiredList(name: string): string[] {
 
 export function readToken(): string {
   const token = readRequired('token');
-  if (/[\r\n]/.test(token)) {
+  if (LINE_BREAK.test(token)) {
     throw new Error('token must be a single line, so check the secret it comes from');
   }
   setSecret(token);

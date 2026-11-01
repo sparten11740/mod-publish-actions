@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 const ACTIONS = ['curseforge/upload', 'modrinth/upload', 'modrinth/gallery'];
 const PNPM_PACKAGE_PATH = /^(.*node_modules\/\.pnpm\/([^/]+)\/node_modules\/(@[^/]+\/[^/]+|[^/]+))\//;
+const LICENSE_FILE = /^licen[cs]e/i;
 const NOTICE_INTRODUCTION = 'This bundle contains code from the following packages, each under its own license.';
 
 type BundledPackage = {
@@ -26,7 +27,7 @@ export function findBundledPackages(inputPaths: string[]): BundledPackage[] {
 }
 
 function readLicense({ name, directory }: BundledPackage): string {
-  const licenseFile = readdirSync(directory).find((file) => /^licen[cs]e/i.test(file));
+  const licenseFile = readdirSync(directory).find((file) => LICENSE_FILE.test(file));
   if (licenseFile === undefined) {
     throw new Error(`${name} has no license file to include in the bundle's notices`);
   }

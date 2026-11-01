@@ -19649,9 +19649,10 @@ function info(message) {
 var import_node_fs = require("node:fs");
 
 // packages/core/src/parse.ts
+var LIST_SEPARATOR = /[\n,]/;
 var DEPENDENCY_TYPES = ["required", "optional", "embedded", "incompatible"];
 function parseList(value) {
-  return value.split(/[\n,]/).map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+  return value.split(LIST_SEPARATOR).map((entry) => entry.trim()).filter((entry) => entry.length > 0);
 }
 function parseChoice(inputName, value, choices) {
   const match = choices.find((choice) => choice === value);
@@ -19675,6 +19676,7 @@ function parseDependencies(value) {
 }
 
 // packages/core/src/action.ts
+var LINE_BREAK = /[\r\n]/;
 var ENVIRONMENTS = ["client", "server", "both"];
 var RELEASE_TYPES = ["alpha", "beta", "release"];
 function readRequired(name) {
@@ -19693,7 +19695,7 @@ function readRequiredList(name) {
 }
 function readToken() {
   const token = readRequired("token");
-  if (/[\r\n]/.test(token)) {
+  if (LINE_BREAK.test(token)) {
     throw new Error("token must be a single line, so check the secret it comes from");
   }
   setSecret(token);
@@ -25714,6 +25716,7 @@ async function postVersion(apiUrl, token, form) {
 
 // modrinth/upload/src/upload.ts
 var FILE_PART = "file";
+var PROJECT_ID = /^[a-zA-Z0-9]{8}$/;
 var ENVIRONMENTS2 = {
   client: "client_only",
   server: "server_only",
@@ -25721,7 +25724,7 @@ var ENVIRONMENTS2 = {
 };
 function readInputs() {
   const inputs = readUploadInputs();
-  if (!/^[a-zA-Z0-9]{8}$/.test(inputs.projectId)) {
+  if (!PROJECT_ID.test(inputs.projectId)) {
     throw new Error(`project-id must be a Modrinth project ID of 8 letters and numbers, not a slug, got "${inputs.projectId}"`);
   }
   return {

@@ -50,6 +50,7 @@ Skills must work in any agent. Use only the standard frontmatter fields (`name`,
 - No file for a single function named after it, such as `find-single-file.ts`. Put functions in a module named for their topic, such as `fs.ts`, which related helpers can join.
 - No code comments, except the version comment after a pinned action.
 - Never `null`; use `undefined`.
+- Regular expressions are named module-level constants, not inline.
 - No single-letter names.
 - Ideally no type casts.
 - Import order: packages, then `@mod-publish-actions/`, then relative.

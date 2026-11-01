@@ -4,6 +4,8 @@ import type { Dirent } from 'node:fs';
 import { extname, join, parse } from 'node:path';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ORDER_PREFIX = /^\d+[-_ ]+/;
+const WORD_SEPARATORS = /[-_]+/g;
 
 const CONTENT_TYPES = new Map([
   ['png', 'image/png'],
@@ -31,10 +33,7 @@ function readExtension(fileName: string): string {
 }
 
 function toTitle(fileName: string): string {
-  const words = parse(fileName)
-    .name.replace(/^\d+[-_ ]+/, '')
-    .replaceAll(/[-_]+/g, ' ')
-    .trim();
+  const words = parse(fileName).name.replace(ORDER_PREFIX, '').replaceAll(WORD_SEPARATORS, ' ').trim();
   return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
 }
 

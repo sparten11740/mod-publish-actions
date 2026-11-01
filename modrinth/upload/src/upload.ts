@@ -8,6 +8,7 @@ import type { ExistingVersion } from '@mod-publish-actions/modrinth';
 import { findVersion, getProjectId, MODRINTH_API_URL, postVersion } from '@mod-publish-actions/modrinth';
 
 const FILE_PART = 'file';
+const PROJECT_ID = /^[a-zA-Z0-9]{8}$/;
 
 const ENVIRONMENTS: Record<UploadInputs['environment'], string> = {
   client: 'client_only',
@@ -21,7 +22,7 @@ export type ModrinthUploadInputs = UploadInputs & {
 
 export function readInputs(): ModrinthUploadInputs {
   const inputs = readUploadInputs();
-  if (!/^[a-zA-Z0-9]{8}$/.test(inputs.projectId)) {
+  if (!PROJECT_ID.test(inputs.projectId)) {
     throw new Error(`project-id must be a Modrinth project ID of 8 letters and numbers, not a slug, got "${inputs.projectId}"`);
   }
   return {

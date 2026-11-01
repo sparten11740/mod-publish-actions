@@ -19646,9 +19646,10 @@ function info(message) {
 var import_node_fs = require("node:fs");
 
 // packages/core/src/parse.ts
+var LIST_SEPARATOR = /[\n,]/;
 var DEPENDENCY_TYPES = ["required", "optional", "embedded", "incompatible"];
 function parseList(value) {
-  return value.split(/[\n,]/).map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+  return value.split(LIST_SEPARATOR).map((entry) => entry.trim()).filter((entry) => entry.length > 0);
 }
 function parseChoice(inputName, value, choices) {
   const match = choices.find((choice) => choice === value);
@@ -19672,6 +19673,7 @@ function parseDependencies(value) {
 }
 
 // packages/core/src/action.ts
+var LINE_BREAK = /[\r\n]/;
 var ENVIRONMENTS = ["client", "server", "both"];
 var RELEASE_TYPES = ["alpha", "beta", "release"];
 function readRequired(name) {
@@ -19690,7 +19692,7 @@ function readRequiredList(name) {
 }
 function readToken() {
   const token = readRequired("token");
-  if (/[\r\n]/.test(token)) {
+  if (LINE_BREAK.test(token)) {
     throw new Error("token must be a single line, so check the secret it comes from");
   }
   setSecret(token);

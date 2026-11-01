@@ -1,3 +1,4 @@
+const LIST_SEPARATOR = /[\n,]/;
 const DEPENDENCY_TYPES = ['required', 'optional', 'embedded', 'incompatible'] as const;
 
 type DependencyType = (typeof DEPENDENCY_TYPES)[number];
@@ -9,7 +10,7 @@ export type Dependency = {
 
 export function parseList(value: string): string[] {
   return value
-    .split(/[\n,]/)
+    .split(LIST_SEPARATOR)
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
 }

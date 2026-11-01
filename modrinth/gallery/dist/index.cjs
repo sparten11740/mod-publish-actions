@@ -19621,6 +19621,7 @@ function info(message) {
 }
 
 // packages/core/src/action.ts
+var LINE_BREAK = /[\r\n]/;
 function readRequired(name) {
   const value = getInput(name, { required: true });
   if (value === "") {
@@ -19630,7 +19631,7 @@ function readRequired(name) {
 }
 function readToken() {
   const token = readRequired("token");
-  if (/[\r\n]/.test(token)) {
+  if (LINE_BREAK.test(token)) {
     throw new Error("token must be a single line, so check the secret it comes from");
   }
   setSecret(token);
@@ -25623,6 +25624,8 @@ async function deleteGalleryImage(apiUrl, token, project, imageUrl) {
 var import_node_fs = require("node:fs");
 var import_node_path = require("node:path");
 var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+var ORDER_PREFIX = /^\d+[-_ ]+/;
+var WORD_SEPARATORS = /[-_]+/g;
 var CONTENT_TYPES = /* @__PURE__ */ new Map([
   ["png", "image/png"],
   ["jpg", "image/jpeg"],
@@ -25638,7 +25641,7 @@ function readExtension(fileName) {
   return (0, import_node_path.extname)(fileName).slice(1).toLowerCase();
 }
 function toTitle(fileName) {
-  const words = (0, import_node_path.parse)(fileName).name.replace(/^\d+[-_ ]+/, "").replaceAll(/[-_]+/g, " ").trim();
+  const words = (0, import_node_path.parse)(fileName).name.replace(ORDER_PREFIX, "").replaceAll(WORD_SEPARATORS, " ").trim();
   return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
 }
 function listEntries(folder) {
