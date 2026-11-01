@@ -27,4 +27,8 @@ describe('findStaleBundles', () => {
       'modrinth/gallery/dist/index.cjs',
     ]);
   });
+
+  it('names a staged bundle the build no longer produces', () => {
+    expect(findStaleBundles(new Map([['old/action/dist/index.cjs', 'junk']]), new Map())).toEqual(['old/action/dist/index.cjs']);
+  });
 });

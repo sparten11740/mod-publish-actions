@@ -7,7 +7,7 @@ GitHub Actions for publishing mods to CurseForge and Modrinth, in one pnpm monor
 - `packages/core`: code shared between actions (input parsing, HTTP, running an action). `@mod-publish-actions/core/testing` holds test helpers and is never imported by action code.
 - `packages/modrinth`: the Modrinth API client that the Modrinth actions share.
 - `curseforge/upload`, `modrinth/upload`, `modrinth/gallery`: one action each, with `action.yml`, `src/index.ts` as the entry point and the bundled `dist/index.cjs`.
-- `scripts/build-actions.ts`: bundles every action with esbuild. A new action has to be added to its list.
+- `scripts/build-actions.ts`: bundles every action with esbuild and writes the license notices of the packages in each bundle to `dist/THIRD_PARTY_LICENSES.txt`. A new action has to be added to its list.
 - `scripts/check-staged.ts`: runs the checks and build on a copy of the staged files, so a commit is checked on its own.
 - `.agents/skills`: skills in the agent-agnostic [Agent Skills](https://agentskills.io) format. Claude Code only documents `.claude/skills`, so each skill also needs a symlink there: `ln -s ../../.agents/skills/<name> .claude/skills/<name>`.
 

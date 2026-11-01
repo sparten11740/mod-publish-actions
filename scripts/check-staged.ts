@@ -6,12 +6,12 @@ import { dirname, join } from 'node:path';
 type Bundles = Map<string, string>;
 
 function readBundles(folder: string): Bundles {
-  const bundlePaths = globSync('*/*/dist/index.cjs', { cwd: folder, exclude: (name) => name === 'node_modules' });
+  const bundlePaths = globSync('*/*/dist/*', { cwd: folder, exclude: (name) => name === 'node_modules' });
   return new Map(bundlePaths.map((bundlePath) => [bundlePath, readFileSync(join(folder, bundlePath), 'utf8')]));
 }
 
 export function findStaleBundles(staged: Bundles, built: Bundles): string[] {
-  return [...built.keys()].filter((bundlePath) => staged.get(bundlePath) !== built.get(bundlePath));
+  return [...new Set([...staged.keys(), ...built.keys()])].filter((bundlePath) => staged.get(bundlePath) !== built.get(bundlePath));
 }
 
 function checkStagedFiles(root: string): void {

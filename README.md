@@ -69,4 +69,4 @@ See [AGENTS.md](AGENTS.md) for commands and conventions.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The bundle in each action's `dist/` also contains third-party code under its own license, listed in `dist/THIRD_PARTY_LICENSES.txt` next to it.
