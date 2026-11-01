@@ -2,7 +2,7 @@
 
 GitHub Actions for publishing Minecraft mods to CurseForge and Modrinth.
 
-**Status:** early development. `modrinth/upload` is implemented but has not published to Modrinth yet. The other actions validate their inputs, then fail with "not implemented" until their API calls are written.
+**Status:** early development. `modrinth/upload` and `modrinth/gallery` are implemented but have not run against Modrinth yet. `curseforge/upload` validates its inputs, then fails with "not implemented" until its API calls are written.
 
 | Action              | Purpose                                       |
 | ------------------- | --------------------------------------------- |
@@ -52,6 +52,16 @@ Run the upload actions once per file, usually from a matrix. Run the gallery act
 ```
 
 Each action's `action.yml` documents its inputs and outputs.
+
+## Gallery sync
+
+`modrinth/gallery` makes the gallery match a folder of images, and running it again changes nothing if the folder is unchanged.
+
+- **Order:** images are sorted by file name, and numbers sort as numbers (`2-` before `10-`). The first image is featured.
+- **Titles:** `01-crater-floor.jpg` becomes "Crater floor". Titles identify images between runs, so they must be unique.
+- **Replacing an image:** give the new file a new name and set `remove-missing: true`. Modrinth's documented API has no way to tell that a file with the same name has new contents, so it is left as it is.
+- **Removing images:** with `remove-missing: true`, images whose titles match no file are deleted, including ones you added by hand. A folder with no images always fails, so a wrong path can't empty the gallery.
+- **Limits:** images can be at most 5 MiB. Descriptions set on Modrinth are left alone. Videos aren't supported.
 
 ## Development
 

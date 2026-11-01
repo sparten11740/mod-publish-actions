@@ -2,17 +2,17 @@ name: Sync Modrinth gallery
 description: Sync a folder of images to the gallery of a Modrinth project
 inputs:
   token:
-    description: Modrinth personal access token with the PROJECT_WRITE scope
+    description: Modrinth personal access token with the PROJECT_READ and PROJECT_WRITE scopes
     required: true
   project-id:
     description: Modrinth project ID or slug
     required: true
   images:
-    description: Folder of images to sync
+    description: Folder of images to sync. They are ordered by file name, the first is featured, and titles come from file names, so give a replaced image a new file name
     required: false
     default: docs/images
   remove-missing:
-    description: Delete gallery images that are no longer in the folder
+    description: Delete gallery images whose titles match no file in the folder
     required: false
     default: 'false'
 runs:

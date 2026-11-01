@@ -31,7 +31,7 @@ pnpm build    # bundles every action into its dist/
 
 ## Rules for the actions
 
-- **Official APIs only.** Use documented platform APIs. If a feature has no official API, leave it out rather than using private endpoints or browser sessions. This is why there is no `curseforge/gallery`.
+- **Official APIs only.** Use documented platform APIs. If a feature has no official API, leave it out rather than using private endpoints, browser sessions, or response fields and URL formats the docs leave out. This is why there is no `curseforge/gallery`.
 - **`dist/` is committed.** GitHub runs an action straight from the repository, so run `pnpm build` and commit the result. CI fails when `dist/` is out of date.
 - **Keep the inputs stable.** Inputs are the public API and tags cover the whole repository. Adding an optional input is fine; renaming or removing one is a breaking change.
 - **Same concept, same input.** Inputs that mean the same thing use the same name and values on every platform, and each action translates them for its API. Platform-only inputs live in that action.
