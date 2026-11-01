@@ -13,6 +13,7 @@ const API_URL = 'https://modrinth.test/v2';
 const UPLOAD_URL = `${API_URL}/version`;
 const VERSION_LOOKUP_URL = `${API_URL}/project/AABBCCDD/version/1.0.0%2B1.21.1-neoforge`;
 const TOKEN = 'secret-token';
+const VALID_INPUTS = { ...VALID_UPLOAD_INPUTS, 'project-id': 'AABBCCDD', 'version-number': '1.0.0' };
 
 const server = useMockServer();
 const uploadedForms: FormData[] = [];
@@ -107,15 +108,39 @@ describe('readInputs', () => {
   });
 
   it('adds the version number to the shared inputs', () => {
-    stubInputs({ ...VALID_UPLOAD_INPUTS, 'version-number': '1.0.0+1.21.1-neoforge' });
+    stubInputs({ ...VALID_INPUTS, 'version-number': '1.0.0+1.21.1-neoforge' });
 
-    expect(readInputs()).toMatchObject({ projectId: '123456', versionNumber: '1.0.0+1.21.1-neoforge' });
+    expect(readInputs()).toMatchObject({ projectId: 'AABBCCDD', versionNumber: '1.0.0+1.21.1-neoforge' });
   });
 
   it.each(['', '   '])('requires a version number, rejecting %j', (versionNumber) => {
-    stubInputs({ ...VALID_UPLOAD_INPUTS, 'version-number': versionNumber });
+    stubInputs({ ...VALID_INPUTS, 'version-number': versionNumber });
 
     expect(() => readInputs()).toThrow('version-number');
+  });
+});
+
+describe('readInputs validation', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('lowercases loaders, because Modrinth only knows the lowercase names', () => {
+    stubInputs({ ...VALID_INPUTS, loaders: 'NeoForge, Fabric' });
+
+    expect(readInputs().loaders).toEqual(['neoforge', 'fabric']);
+  });
+
+  it.each(['fabric-api', 'blockpilot', 'P7dR8mS'])('rejects the project ID %s, naming the input', (projectId) => {
+    stubInputs({ ...VALID_INPUTS, 'project-id': projectId });
+
+    expect(() => readInputs()).toThrow('project-id must be a Modrinth project ID');
+  });
+
+  it('accepts a real project ID', () => {
+    stubInputs({ ...VALID_INPUTS, 'project-id': 'P7dR8mSH' });
+
+    expect(readInputs().projectId).toBe('P7dR8mSH');
   });
 });
 
@@ -291,13 +316,16 @@ describe('uploadVersion', () => {
     const outputFile = join(folder, 'output');
     writeFileSync(file, 'jar contents');
     writeFileSync(outputFile, '');
-    stubInputs({ ...VALID_UPLOAD_INPUTS, file, 'version-number': '1.0.0' });
+    stubInputs({ ...VALID_INPUTS, file, 'version-number': '1.0.0' });
     vi.stubEnv('GITHUB_OUTPUT', outputFile);
     const requests = mockModrinth({}, 'https://api.modrinth.com/v2');
 
     await uploadVersion();
 
-    expect(readUrls(requests)).toEqual(['https://api.modrinth.com/v2/project/123456/version/1.0.0', 'https://api.modrinth.com/v2/version']);
+    expect(readUrls(requests)).toEqual([
+      'https://api.modrinth.com/v2/project/AABBCCDD/version/1.0.0',
+      'https://api.modrinth.com/v2/version',
+    ]);
     const output = readFileSync(outputFile, 'utf8');
     expect(output).toContain('version-id');
     expect(output).toContain('NEWVERSION');

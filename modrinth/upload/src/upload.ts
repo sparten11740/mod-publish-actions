@@ -20,7 +20,15 @@ export type ModrinthUploadInputs = UploadInputs & {
 };
 
 export function readInputs(): ModrinthUploadInputs {
-  return { ...readUploadInputs(), versionNumber: readRequired('version-number') };
+  const inputs = readUploadInputs();
+  if (!/^[a-zA-Z0-9]{8}$/.test(inputs.projectId)) {
+    throw new Error(`project-id must be a Modrinth project ID of 8 letters and numbers, not a slug, got "${inputs.projectId}"`);
+  }
+  return {
+    ...inputs,
+    loaders: inputs.loaders.map((loader) => loader.toLowerCase()),
+    versionNumber: readRequired('version-number'),
+  };
 }
 
 function assertCoversFile(existing: ExistingVersion, { versionNumber, loaders, gameVersions }: ModrinthUploadInputs): void {
