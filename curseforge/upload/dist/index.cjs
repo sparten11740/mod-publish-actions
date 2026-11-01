@@ -24472,6 +24472,7 @@ function parseReply(text, schema, url) {
 var import_promises = require("node:fs/promises");
 var import_node_path2 = require("node:path");
 var CURSEFORGE_API_URL = "https://minecraft.curseforge.com/api";
+var WHOLE_NUMBER = /^\d+$/;
 var UPLOADED_FILE_SCHEMA = object({ id: int() });
 var LOADER_NAMES = /* @__PURE__ */ new Map([
   ["fabric", "Fabric"],
@@ -24492,10 +24493,15 @@ var RELATION_TYPES = {
 };
 function readInputs() {
   const inputs = readUploadInputs();
-  if (!/^\d+$/.test(inputs.projectId)) {
+  if (!WHOLE_NUMBER.test(inputs.projectId)) {
     throw new Error(`project-id must be a numeric CurseForge project ID, got "${inputs.projectId}"`);
   }
-  return { ...inputs, javaVersions: parseList(getInput("java-versions")) };
+  const javaVersions = parseList(getInput("java-versions"));
+  const invalidJavaVersions = javaVersions.filter((javaVersion) => !WHOLE_NUMBER.test(javaVersion));
+  if (invalidJavaVersions.length > 0) {
+    throw new Error(`java-versions must be plain numbers such as 21, got "${invalidJavaVersions.join(", ")}"`);
+  }
+  return { ...inputs, javaVersions };
 }
 function toGameVersionNames({ gameVersions, loaders, environment, javaVersions }) {
   return [

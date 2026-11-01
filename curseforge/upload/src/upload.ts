@@ -7,6 +7,7 @@ import { assertSuccess, findSingleFile, parseList, parseReply, readUploadInputs,
 import type { UploadInputs } from '@mod-publish-actions/core';
 
 const CURSEFORGE_API_URL = 'https://minecraft.curseforge.com/api';
+const WHOLE_NUMBER = /^\d+$/;
 
 const UPLOADED_FILE_SCHEMA = zod.object({ id: zod.int() });
 
@@ -36,10 +37,15 @@ export type CurseforgeUploadInputs = UploadInputs & {
 
 export function readInputs(): CurseforgeUploadInputs {
   const inputs = readUploadInputs();
-  if (!/^\d+$/.test(inputs.projectId)) {
+  if (!WHOLE_NUMBER.test(inputs.projectId)) {
     throw new Error(`project-id must be a numeric CurseForge project ID, got "${inputs.projectId}"`);
   }
-  return { ...inputs, javaVersions: parseList(getInput('java-versions')) };
+  const javaVersions = parseList(getInput('java-versions'));
+  const invalidJavaVersions = javaVersions.filter((javaVersion) => !WHOLE_NUMBER.test(javaVersion));
+  if (invalidJavaVersions.length > 0) {
+    throw new Error(`java-versions must be plain numbers such as 21, got "${invalidJavaVersions.join(', ')}"`);
+  }
+  return { ...inputs, javaVersions };
 }
 
 function toGameVersionNames({ gameVersions, loaders, environment, javaVersions }: CurseforgeUploadInputs): string[] {

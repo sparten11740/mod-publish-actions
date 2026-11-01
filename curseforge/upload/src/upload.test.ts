@@ -84,6 +84,12 @@ describe('readInputs', () => {
     expect(readInputs().javaVersions).toEqual([]);
   });
 
+  it('rejects a Java version that is not a plain number, naming the input', () => {
+    stubInputs({ ...VALID_UPLOAD_INPUTS, 'java-versions': '21, Java 25' });
+
+    expect(() => readInputs()).toThrow('java-versions must be plain numbers such as 21, got "Java 25"');
+  });
+
   it('rejects a project ID that is not numeric', () => {
     stubInputs({ ...VALID_UPLOAD_INPUTS, 'project-id': 'blockpilot' });
 
