@@ -2,8 +2,6 @@
 
 GitHub Actions for publishing Minecraft mods to CurseForge and Modrinth.
 
-**Status:** early development. All three actions are implemented, but none has run against the real service yet.
-
 | Action              | Purpose                                       |
 | ------------------- | --------------------------------------------- |
 | `curseforge/upload` | Upload a file to a CurseForge project         |
