@@ -93,7 +93,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
   - CurseForge: https://support.curseforge.com/en/support/solutions/articles/9000197321-curseforge-api
   - Modrinth: https://docs.modrinth.com/api/
 - CurseForge: the token goes in the `X-Api-Token` header, never the `token` query parameter. Ambiguous game version names resolve to one exact entry or fail.
-- Modrinth: every request sends a uniquely identifying `User-Agent`. Tokens need only the scope in use (`VERSION_CREATE` or `PROJECT_WRITE`). A rate limit response gives a failure message saying how long to wait, and is retried only when the request is safe to repeat.
+- Modrinth: every request sends a uniquely identifying `User-Agent`. Tokens need only the scopes in use, which each `action.yml` lists. A rate limit response gives a failure message saying how long to wait, and is retried only when the request is safe to repeat.
 - Every network call has a timeout. Only safe requests are retried, because retrying an upload could publish it twice.
 - Gallery sync creates no duplicates on a re-run, deletes nothing unless `remove-missing` is true, fails before any request on an empty folder or files over Modrinth's 5 MiB limit, and leaves descriptions alone.
 

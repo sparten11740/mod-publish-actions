@@ -25546,6 +25546,11 @@ var import_promises = require("node:fs/promises");
 // packages/modrinth/src/api.ts
 var TOO_MANY_REQUESTS = 429;
 var IDENTIFIED_SCHEMA = object({ id: string2() });
+var EXISTING_VERSION_SCHEMA = object({
+  id: string2(),
+  loaders: array(string2()),
+  game_versions: array(string2())
+});
 var GALLERY_IMAGE_SCHEMA = object({
   url: string2(),
   featured: boolean2(),

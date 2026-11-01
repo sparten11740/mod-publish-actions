@@ -4,7 +4,8 @@ import { basename } from 'node:path';
 
 import { findSingleFile, readUploadInputs } from '@mod-publish-actions/core';
 import type { UploadInputs } from '@mod-publish-actions/core';
-import { findVersionId, getProjectId, MODRINTH_API_URL, postVersion } from '@mod-publish-actions/modrinth';
+import type { ExistingVersion } from '@mod-publish-actions/modrinth';
+import { findVersion, getProjectId, MODRINTH_API_URL, postVersion } from '@mod-publish-actions/modrinth';
 
 const FILE_PART = 'file';
 
@@ -22,12 +23,25 @@ export function readInputs(): ModrinthUploadInputs {
   return { ...readUploadInputs(), versionNumber: getInput('version-number', { required: true }) };
 }
 
+function assertCoversFile(existing: ExistingVersion, { versionNumber, loaders, gameVersions }: ModrinthUploadInputs): void {
+  const uncovered = [
+    ...loaders.filter((loader) => !existing.loaders.includes(loader)),
+    ...gameVersions.filter((gameVersion) => !existing.game_versions.includes(gameVersion)),
+  ];
+  if (uncovered.length > 0) {
+    throw new Error(
+      `version-number ${versionNumber} already exists as ${existing.id}, which does not include ${uncovered.join(', ')}. Give each file its own version-number`,
+    );
+  }
+}
+
 export async function publishVersion(inputs: ModrinthUploadInputs, apiUrl: string): Promise<string> {
   const filePath = findSingleFile(inputs.file);
-  const existingId = await findVersionId(apiUrl, inputs.projectId, inputs.versionNumber);
-  if (existingId !== undefined) {
-    warning(`Version ${inputs.versionNumber} already exists as ${existingId}, so nothing was uploaded`);
-    return existingId;
+  const existing = await findVersion(apiUrl, inputs.token, inputs.projectId, inputs.versionNumber);
+  if (existing !== undefined) {
+    assertCoversFile(existing, inputs);
+    warning(`Version ${inputs.versionNumber} already exists as ${existing.id}, so nothing was uploaded`);
+    return existing.id;
   }
 
   const dependencies = await Promise.all(

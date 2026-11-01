@@ -8,6 +8,12 @@ const TOO_MANY_REQUESTS = 429;
 
 const IDENTIFIED_SCHEMA = zod.object({ id: zod.string() });
 
+const EXISTING_VERSION_SCHEMA = zod.object({
+  id: zod.string(),
+  loaders: zod.array(zod.string()),
+  game_versions: zod.array(zod.string()),
+});
+
 const GALLERY_IMAGE_SCHEMA = zod.object({
   url: zod.string(),
   featured: zod.boolean(),
@@ -23,6 +29,8 @@ const PROJECT_GALLERY_SCHEMA = zod.object({
 });
 
 export const MODRINTH_API_URL = 'https://api.modrinth.com/v2';
+
+export type ExistingVersion = zod.infer<typeof EXISTING_VERSION_SCHEMA>;
 
 export type GalleryImage = zod.infer<typeof GALLERY_IMAGE_SCHEMA>;
 
@@ -69,15 +77,20 @@ export async function getProjectId(apiUrl: string, project: string): Promise<str
   return parseReply(await sendAccepted(url, { method: 'GET' }), IDENTIFIED_SCHEMA, url).id;
 }
 
-export async function findVersionId(apiUrl: string, projectId: string, versionNumber: string): Promise<string | undefined> {
+export async function findVersion(
+  apiUrl: string,
+  token: string,
+  projectId: string,
+  versionNumber: string,
+): Promise<ExistingVersion | undefined> {
   const method = 'GET';
   const url = `${projectUrl(apiUrl, projectId)}/version/${encodeURIComponent(versionNumber)}`;
-  const reply = await sendRequest(url, { method });
+  const reply = await sendRequest(url, { method, headers: { Authorization: token } });
   if (reply.response.status === NOT_FOUND) {
     return undefined;
   }
   assertAccepted(reply, url, method);
-  return parseReply(reply.text, IDENTIFIED_SCHEMA, url).id;
+  return parseReply(reply.text, EXISTING_VERSION_SCHEMA, url);
 }
 
 export async function postVersion(apiUrl: string, token: string, form: FormData): Promise<string> {

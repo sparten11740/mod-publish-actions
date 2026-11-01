@@ -50,6 +50,10 @@ function respondWithId(id: string): Response {
   return HttpResponse.json({ id });
 }
 
+function respondWithExistingVersion(): Response {
+  return HttpResponse.json({ id: 'EXISTING', loaders: ['neoforge'], game_versions: ['1.21.1'] });
+}
+
 function respondNotFound(): Response {
   return new HttpResponse(undefined, { status: 404 });
 }
@@ -186,23 +190,35 @@ describe('publishVersion', () => {
     expect(readUploadedData()).toMatchObject({ environment: expected });
   });
 
-  it('looks for an existing version by project and encoded number, without sending the token', async () => {
+  it('looks for an existing version by project and encoded number, with the token so hidden projects are covered', async () => {
     const requests = mockModrinth();
 
     await publishVersion(createInputs(), API_URL);
 
     const lookup = findRequest(requests, VERSION_LOOKUP_URL);
     expect(lookup.method).toBe('GET');
-    expect(lookup.headers.has('authorization')).toBe(false);
+    expect(lookup.headers.get('authorization')).toBe(TOKEN);
   });
 
   it('returns the existing ID and uploads nothing when the version number already exists', async () => {
-    const requests = mockModrinth({ lookup: () => respondWithId('EXISTING') });
+    const requests = mockModrinth({ lookup: respondWithExistingVersion });
 
     await expect(publishVersion(createInputs({ dependencies: [{ project: 'fabric-api', type: 'required' }] }), API_URL)).resolves.toBe(
       'EXISTING',
     );
     expect(readUrls(requests)).toEqual([VERSION_LOOKUP_URL]);
+  });
+
+  it.each([
+    ['loader', { loaders: ['fabric'] }, 'fabric'],
+    ['game version', { gameVersions: ['26.1.2'] }, '26.1.2'],
+  ])('fails, rather than skipping the file, when the existing version has another %s', async (_description, overrides, uncovered) => {
+    const requests = mockModrinth({ lookup: respondWithExistingVersion });
+
+    await expect(publishVersion(createInputs(overrides), API_URL)).rejects.toThrow(
+      `already exists as EXISTING, which does not include ${uncovered}. Give each file its own version-number`,
+    );
+    expect(readUrls(requests)).not.toContain(UPLOAD_URL);
   });
 
   it('uploads nothing when the check for an existing version fails', async () => {

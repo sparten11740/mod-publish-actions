@@ -25646,6 +25646,11 @@ var import_node_path2 = require("node:path");
 var NOT_FOUND = 404;
 var TOO_MANY_REQUESTS = 429;
 var IDENTIFIED_SCHEMA = object({ id: string2() });
+var EXISTING_VERSION_SCHEMA = object({
+  id: string2(),
+  loaders: array(string2()),
+  game_versions: array(string2())
+});
 var GALLERY_IMAGE_SCHEMA = object({
   url: string2(),
   featured: boolean2(),
@@ -25676,15 +25681,15 @@ async function getProjectId(apiUrl, project) {
   const url = projectUrl(apiUrl, project);
   return parseReply(await sendAccepted(url, { method: "GET" }), IDENTIFIED_SCHEMA, url).id;
 }
-async function findVersionId(apiUrl, projectId, versionNumber) {
+async function findVersion(apiUrl, token, projectId, versionNumber) {
   const method = "GET";
   const url = `${projectUrl(apiUrl, projectId)}/version/${encodeURIComponent(versionNumber)}`;
-  const reply = await sendRequest(url, { method });
+  const reply = await sendRequest(url, { method, headers: { Authorization: token } });
   if (reply.response.status === NOT_FOUND) {
     return void 0;
   }
   assertAccepted(reply, url, method);
-  return parseReply(reply.text, IDENTIFIED_SCHEMA, url).id;
+  return parseReply(reply.text, EXISTING_VERSION_SCHEMA, url);
 }
 async function postVersion(apiUrl, token, form) {
   const url = `${apiUrl}/version`;
@@ -25701,12 +25706,24 @@ var ENVIRONMENTS2 = {
 function readInputs() {
   return { ...readUploadInputs(), versionNumber: getInput("version-number", { required: true }) };
 }
+function assertCoversFile(existing, { versionNumber, loaders, gameVersions }) {
+  const uncovered = [
+    ...loaders.filter((loader) => !existing.loaders.includes(loader)),
+    ...gameVersions.filter((gameVersion) => !existing.game_versions.includes(gameVersion))
+  ];
+  if (uncovered.length > 0) {
+    throw new Error(
+      `version-number ${versionNumber} already exists as ${existing.id}, which does not include ${uncovered.join(", ")}. Give each file its own version-number`
+    );
+  }
+}
 async function publishVersion(inputs, apiUrl) {
   const filePath = findSingleFile(inputs.file);
-  const existingId = await findVersionId(apiUrl, inputs.projectId, inputs.versionNumber);
-  if (existingId !== void 0) {
-    warning(`Version ${inputs.versionNumber} already exists as ${existingId}, so nothing was uploaded`);
-    return existingId;
+  const existing = await findVersion(apiUrl, inputs.token, inputs.projectId, inputs.versionNumber);
+  if (existing !== void 0) {
+    assertCoversFile(existing, inputs);
+    warning(`Version ${inputs.versionNumber} already exists as ${existing.id}, so nothing was uploaded`);
+    return existing.id;
   }
   const dependencies = await Promise.all(
     inputs.dependencies.map(async ({ project, type }) => ({

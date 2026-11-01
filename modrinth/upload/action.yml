@@ -2,7 +2,7 @@ name: Upload to Modrinth
 description: Publish a mod file as a new version of a Modrinth project
 inputs:
   token:
-    description: Modrinth personal access token with the VERSION_CREATE scope
+    description: Modrinth personal access token with the VERSION_CREATE scope, plus PROJECT_READ and VERSION_READ while the project isn't public
     required: true
   project-id:
     description: Modrinth project ID, not its slug
@@ -11,7 +11,7 @@ inputs:
     description: Path or glob that matches exactly one file. Folders and -sources or -javadoc jars are ignored
     required: true
   version-number:
-    description: Version number of the new Modrinth version. If it already exists on a public project, nothing is uploaded and a warning is logged
+    description: Version number of the new Modrinth version, which must be unique to each file. If it already exists for the same loaders and game versions, nothing is uploaded and a warning is logged. If it exists for others, the step fails
     required: true
   game-versions:
     description: Game versions the file supports, separated by commas or new lines

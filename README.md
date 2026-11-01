@@ -53,6 +53,12 @@ Run the upload actions once per file, usually from a matrix. Run the gallery act
 
 Each action's `action.yml` documents its inputs and outputs.
 
+## Re-running an upload
+
+Re-running a job is safe in `modrinth/upload`: if `version-number` already exists for the same loaders and game versions, it uploads nothing, logs a warning and returns that version's ID. If the number exists for other loaders or game versions, the step fails, so give each file its own `version-number`.
+
+Until a project is public, Modrinth only shows its versions to a token with the `PROJECT_READ` and `VERSION_READ` scopes. Without them, a re-run can publish a duplicate.
+
 ## Gallery sync
 
 `modrinth/gallery` makes the gallery match a folder of images, and running it again changes nothing if the folder is unchanged.
