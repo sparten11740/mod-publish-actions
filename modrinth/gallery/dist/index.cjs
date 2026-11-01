@@ -19604,7 +19604,7 @@ function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
 
-// packages/core/src/run-action.ts
+// packages/core/src/action.ts
 async function runAction(action) {
   try {
     await action();
@@ -19613,7 +19613,7 @@ async function runAction(action) {
   }
 }
 
-// modrinth/gallery/src/read-inputs.ts
+// modrinth/gallery/src/gallery.ts
 function readInputs() {
   return {
     token: getInput("token", { required: true }),
@@ -19622,8 +19622,6 @@ function readInputs() {
     removeMissing: getBooleanInput("remove-missing", { required: true })
   };
 }
-
-// modrinth/gallery/src/sync-gallery.ts
 async function syncGallery() {
   readInputs();
   throw new Error("modrinth/gallery is not implemented yet");

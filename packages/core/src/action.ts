@@ -1,10 +1,8 @@
-import { getInput } from '@actions/core';
+import { getInput, setFailed } from '@actions/core';
+import { readFileSync } from 'node:fs';
 
-import { parseChoice } from './parse-choice';
-import { parseDependencies } from './parse-dependencies';
-import type { Dependency } from './parse-dependencies';
-import { parseList } from './parse-list';
-import { readChangelog } from './read-changelog';
+import { parseChoice, parseDependencies, parseList } from './parse';
+import type { Dependency } from './parse';
 
 const ENVIRONMENTS = ['client', 'server', 'both'] as const;
 const RELEASE_TYPES = ['alpha', 'beta', 'release'] as const;
@@ -29,6 +27,19 @@ function getRequired(name: string): string {
   return getInput(name, { required: true });
 }
 
+export function readChangelog(changelog: string, changelogFile: string): string {
+  if (changelog !== '' && changelogFile !== '') {
+    throw new Error('Set changelog or changelog-file, not both');
+  }
+  if (changelog !== '') {
+    return changelog;
+  }
+  if (changelogFile !== '') {
+    return readFileSync(changelogFile, 'utf8');
+  }
+  throw new Error('Set changelog or changelog-file');
+}
+
 export function readUploadInputs(): UploadInputs {
   return {
     token: getRequired('token'),
@@ -42,4 +53,12 @@ export function readUploadInputs(): UploadInputs {
     displayName: getInput('display-name') || undefined,
     dependencies: parseDependencies(getInput('dependencies')),
   };
+}
+
+export async function runAction(action: () => Promise<void>): Promise<void> {
+  try {
+    await action();
+  } catch (error) {
+    setFailed(error instanceof Error ? error.message : String(error));
+  }
 }

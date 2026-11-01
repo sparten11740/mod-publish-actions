@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { stubInputs } from '@mod-publish-actions/core/testing';
 
-import { readInputs } from './read-inputs';
+import { readInputs } from './gallery';
 
 const VALID_INPUTS = {
   token: 'secret',

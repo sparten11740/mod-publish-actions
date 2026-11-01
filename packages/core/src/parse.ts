@@ -1,6 +1,3 @@
-import { parseChoice } from './parse-choice';
-import { parseList } from './parse-list';
-
 const DEPENDENCY_TYPES = ['required', 'optional', 'embedded', 'incompatible'] as const;
 
 type DependencyType = (typeof DEPENDENCY_TYPES)[number];
@@ -9,6 +6,21 @@ export type Dependency = {
   project: string;
   type: DependencyType;
 };
+
+export function parseList(value: string): string[] {
+  return value
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+export function parseChoice<Choice extends string>(inputName: string, value: string, choices: readonly Choice[]): Choice {
+  const match = choices.find((choice) => choice === value);
+  if (match === undefined) {
+    throw new Error(`${inputName} must be one of ${choices.join(', ')}, got "${value}"`);
+  }
+  return match;
+}
 
 function parseDependency(entry: string): Dependency {
   const separator = entry.lastIndexOf(':');

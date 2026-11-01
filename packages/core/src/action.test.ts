@@ -1,7 +1,31 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { readUploadInputs } from './read-upload-inputs';
+import { readChangelog, readUploadInputs } from './action';
 import { stubInputs, VALID_UPLOAD_INPUTS } from './testing';
+
+describe('readChangelog', () => {
+  it('returns inline text', () => {
+    expect(readChangelog('Fixed a crash', '')).toBe('Fixed a crash');
+  });
+
+  it('reads a file', () => {
+    const changelogFile = join(mkdtempSync(join(tmpdir(), 'changelog-')), 'CHANGELOG.md');
+    writeFileSync(changelogFile, '## 1.0.0');
+
+    expect(readChangelog('', changelogFile)).toBe('## 1.0.0');
+  });
+
+  it('rejects both sources at once', () => {
+    expect(() => readChangelog('Fixed a crash', 'CHANGELOG.md')).toThrow('not both');
+  });
+
+  it('rejects no source at all', () => {
+    expect(() => readChangelog('', '')).toThrow('Set changelog or changelog-file');
+  });
+});
 
 describe('readUploadInputs', () => {
   afterEach(() => {

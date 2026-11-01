@@ -14,3 +14,8 @@ export function readInputs(): CurseforgeUploadInputs {
   }
   return { ...inputs, javaVersions: parseList(getInput('java-versions')) };
 }
+
+export async function uploadFile(): Promise<void> {
+  readInputs();
+  throw new Error('curseforge/upload is not implemented yet');
+}

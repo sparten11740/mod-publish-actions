@@ -19143,11 +19143,6 @@ var require_undici = __commonJS({
   }
 });
 
-// packages/core/src/parse-list.ts
-function parseList(value) {
-  return value.split(/[\n,]/).map((entry) => entry.trim()).filter((entry) => entry.length > 0);
-}
-
 // node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/command.js
 var os = __toESM(require("os"), 1);
 
@@ -19598,7 +19593,14 @@ function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
 
-// packages/core/src/parse-choice.ts
+// packages/core/src/action.ts
+var import_node_fs = require("node:fs");
+
+// packages/core/src/parse.ts
+var DEPENDENCY_TYPES = ["required", "optional", "embedded", "incompatible"];
+function parseList(value) {
+  return value.split(/[\n,]/).map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+}
 function parseChoice(inputName, value, choices) {
   const match = choices.find((choice) => choice === value);
   if (match === void 0) {
@@ -19606,9 +19608,6 @@ function parseChoice(inputName, value, choices) {
   }
   return match;
 }
-
-// packages/core/src/parse-dependencies.ts
-var DEPENDENCY_TYPES = ["required", "optional", "embedded", "incompatible"];
 function parseDependency(entry) {
   const separator = entry.lastIndexOf(":");
   if (separator <= 0) {
@@ -19623,8 +19622,12 @@ function parseDependencies(value) {
   return parseList(value).map(parseDependency);
 }
 
-// packages/core/src/read-changelog.ts
-var import_node_fs = require("node:fs");
+// packages/core/src/action.ts
+var ENVIRONMENTS = ["client", "server", "both"];
+var RELEASE_TYPES = ["alpha", "beta", "release"];
+function getRequired(name) {
+  return getInput(name, { required: true });
+}
 function readChangelog(changelog, changelogFile) {
   if (changelog !== "" && changelogFile !== "") {
     throw new Error("Set changelog or changelog-file, not both");
@@ -19636,13 +19639,6 @@ function readChangelog(changelog, changelogFile) {
     return (0, import_node_fs.readFileSync)(changelogFile, "utf8");
   }
   throw new Error("Set changelog or changelog-file");
-}
-
-// packages/core/src/read-upload-inputs.ts
-var ENVIRONMENTS = ["client", "server", "both"];
-var RELEASE_TYPES = ["alpha", "beta", "release"];
-function getRequired(name) {
-  return getInput(name, { required: true });
 }
 function readUploadInputs() {
   return {
@@ -19658,8 +19654,6 @@ function readUploadInputs() {
     dependencies: parseDependencies(getInput("dependencies"))
   };
 }
-
-// packages/core/src/run-action.ts
 async function runAction(action) {
   try {
     await action();
@@ -19668,7 +19662,7 @@ async function runAction(action) {
   }
 }
 
-// curseforge/upload/src/read-inputs.ts
+// curseforge/upload/src/upload.ts
 function readInputs() {
   const inputs = readUploadInputs();
   if (!/^\d+$/.test(inputs.projectId)) {
@@ -19676,8 +19670,6 @@ function readInputs() {
   }
   return { ...inputs, javaVersions: parseList(getInput("java-versions")) };
 }
-
-// curseforge/upload/src/upload-file.ts
 async function uploadFile() {
   readInputs();
   throw new Error("curseforge/upload is not implemented yet");

@@ -1,4 +1,3 @@
-export { parseList } from './parse-list';
-export { readUploadInputs } from './read-upload-inputs';
-export type { UploadInputs } from './read-upload-inputs';
-export { runAction } from './run-action';
+export { readUploadInputs, runAction } from './action';
+export type { UploadInputs } from './action';
+export { parseList } from './parse';

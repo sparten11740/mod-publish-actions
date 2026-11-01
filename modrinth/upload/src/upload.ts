@@ -10,3 +10,8 @@ type ModrinthUploadInputs = UploadInputs & {
 export function readInputs(): ModrinthUploadInputs {
   return { ...readUploadInputs(), versionNumber: getInput('version-number', { required: true }) };
 }
+
+export async function uploadVersion(): Promise<void> {
+  readInputs();
+  throw new Error('modrinth/upload is not implemented yet');
+}
