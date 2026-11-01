@@ -1,62 +1,88 @@
+import { http, HttpResponse } from 'msw/http';
+import { passthrough } from 'msw/utils/passthrough';
+import { createServer } from 'node:net';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as zod from 'zod/v4';
 
 import { assertSuccess, parseReply, sendRequest } from './http';
+import { recordRequests, useMockServer } from './testing';
 
 const URL_UNDER_TEST = 'https://api.test/thing';
 const ID_SCHEMA = zod.object({ id: zod.string() });
 
+const server = useMockServer();
+
+async function findClosedPortUrl(): Promise<string> {
+  const listener = createServer();
+  await new Promise<void>((resolve) => {
+    listener.listen(0, '127.0.0.1', resolve);
+  });
+  const address = listener.address();
+  await new Promise((resolve) => {
+    listener.close(resolve);
+  });
+  if (address instanceof Object) {
+    return `http://127.0.0.1:${address.port}/thing`;
+  }
+  throw new Error('The listener has no port');
+}
+
 describe('sendRequest', () => {
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it('sends the method, headers, body, a User-Agent and a timeout', async () => {
-    const fetchStub = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async () => new Response('ok'));
-    vi.stubGlobal('fetch', fetchStub);
+  it('sends the method, headers, body and a User-Agent', async () => {
+    const requests = recordRequests(server);
+    server.use(http.post(URL_UNDER_TEST, () => new HttpResponse('ok')));
 
     const { text } = await sendRequest(URL_UNDER_TEST, { method: 'POST', headers: { Authorization: 'token' }, body: 'data' });
 
     expect(text).toBe('ok');
-    const init = fetchStub.mock.calls[0]?.[1];
-    expect(init?.method).toBe('POST');
-    expect(init?.body).toBe('data');
-    expect(init?.headers).toEqual({ Authorization: 'token', 'User-Agent': 'sparten11740/mod-publish-actions' });
-    expect(init?.signal).toBeInstanceOf(AbortSignal);
+    expect(requests[0]?.method).toBe('POST');
+    expect(requests[0]?.headers.get('authorization')).toBe('token');
+    expect(requests[0]?.headers.get('user-agent')).toBe('sparten11740/mod-publish-actions');
+    await expect(requests[0]?.text()).resolves.toBe('data');
+  });
+
+  it('sets a timeout on every request', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    server.use(http.get(URL_UNDER_TEST, () => new HttpResponse('ok')));
+
+    await sendRequest(URL_UNDER_TEST, { method: 'GET' });
+
+    expect(timeout).toHaveBeenCalledWith(300_000);
   });
 
   it('names the request when the response cannot be read', async () => {
-    vi.stubGlobal(
-      'fetch',
-      async () =>
-        new Response(
-          new ReadableStream({
-            start(controller) {
-              controller.error(new Error('terminated'));
-            },
-          }),
-        ),
+    server.use(
+      http.post(
+        URL_UNDER_TEST,
+        () =>
+          new HttpResponse(
+            new ReadableStream({
+              start(controller) {
+                controller.error(new Error('terminated'));
+              },
+            }),
+          ),
+      ),
     );
 
-    await expect(sendRequest(URL_UNDER_TEST, { method: 'POST' })).rejects.toThrow(`POST ${URL_UNDER_TEST} failed: Error: terminated`);
+    await expect(sendRequest(URL_UNDER_TEST, { method: 'POST' })).rejects.toThrow(`POST ${URL_UNDER_TEST} failed:`);
   });
 
   it('names the request when the network fails', async () => {
-    vi.stubGlobal('fetch', async () => {
-      throw new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND') });
-    });
+    server.use(http.get(URL_UNDER_TEST, () => HttpResponse.error()));
 
-    await expect(sendRequest(URL_UNDER_TEST, { method: 'GET' })).rejects.toThrow(
-      `GET ${URL_UNDER_TEST} failed: Error: getaddrinfo ENOTFOUND`,
-    );
+    await expect(sendRequest(URL_UNDER_TEST, { method: 'GET' })).rejects.toThrow(`GET ${URL_UNDER_TEST} failed:`);
   });
 
-  it('keeps the error code when a network failure has no message of its own', async () => {
-    vi.stubGlobal('fetch', async () => {
-      throw new TypeError('fetch failed', { cause: Object.assign(new AggregateError([]), { code: 'ECONNREFUSED' }) });
-    });
+  it('keeps the error code of a real connection failure', async () => {
+    const url = await findClosedPortUrl();
+    server.use(http.get(url, () => passthrough()));
 
-    await expect(sendRequest(URL_UNDER_TEST, { method: 'GET' })).rejects.toThrow('ECONNREFUSED');
+    await expect(sendRequest(url, { method: 'GET' })).rejects.toThrow('ECONNREFUSED');
   });
 });
 

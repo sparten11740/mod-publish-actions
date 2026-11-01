@@ -54,6 +54,7 @@ Skills must work in any agent. Use only the standard frontmatter fields (`name`,
 - Ideally no type casts.
 - Import order: packages, then `@mod-publish-actions/`, then relative.
 - Tests use Vitest and sit next to the module as `*.test.ts`. Test names describe what they assert.
+- HTTP in tests is mocked with MSW through `useMockServer` from `@mod-publish-actions/core/testing`. Never stub `fetch` directly. Unhandled requests fail the test.
 
 ## Commits
 

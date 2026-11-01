@@ -62,6 +62,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 - **Type escapes:** `as X` (except `as const`), non-null `!`, `any`, `@ts-ignore`, `@ts-expect-error`.
 - **`null`:** use `undefined`.
 - **Unparsed data:** `response.json()`, or `JSON.parse` whose result does not go straight into a `zod/v4` schema.
+- **Stubbed HTTP:** `stubGlobal('fetch'`, or a spy or mock on `fetch`.
 - **Leftovers:** `console.*` (use `@actions/core` logging), `TODO`/`FIXME`, commented-out code, `.only`, `.skip`, real tokens or keys.
 - **Commands:** `exec`, `execSync` or `promisify(exec)` from `node:child_process`, `shell: true`, and any variable inside the command line string passed to `@actions/exec`.
 - **Action references:** every `uses:` is a full 40-character commit SHA followed by its version in a comment.
@@ -158,7 +159,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 **Tests**
 
 - New behaviour has tests next to the module, and test names describe what they assert.
-- Tests use no real network or tokens. Stub `fetch` and assert the real request: URL, headers and multipart fields.
+- Tests use no real network or tokens. Mock HTTP with MSW through `useMockServer`, never by stubbing `fetch`, and assert the real request: URL, headers and multipart fields.
 - Failure paths are covered: non-2xx responses, malformed bodies and invalid inputs.
 - Tests stub inputs with `stubInputs` and clean up with `vi.unstubAllEnvs`.
 - Nothing makes a test pass falsely.

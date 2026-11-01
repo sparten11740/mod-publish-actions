@@ -1,9 +1,10 @@
+import { http, HttpResponse } from 'msw/http';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { stubInputs } from '@mod-publish-actions/core/testing';
+import { recordRequests, stubInputs, useMockServer } from '@mod-publish-actions/core/testing';
 import type { GalleryImage } from '@mod-publish-actions/modrinth';
 
 import { applySync, planSync, readInputs, syncGallery } from './gallery';
@@ -17,6 +18,8 @@ const VALID_INPUTS = {
   images: 'docs/images',
   'remove-missing': 'true',
 };
+
+const server = useMockServer();
 
 function createLocalImage(title: string, ordering: number): LocalImage {
   return {
@@ -41,17 +44,19 @@ function createFolder(...files: string[]): string {
   return folder;
 }
 
-function stubModrinth(gallery: GalleryImage[], failOn?: string): string[] {
-  const requests: string[] = [];
-  vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
-    const request = `${init.method} ${url}`;
-    requests.push(request);
-    if (init.method === failOn) {
-      return new Response('Server error', { status: 500 });
-    }
-    return init.method === 'GET' ? new Response(JSON.stringify({ gallery })) : new Response(undefined, { status: 204 });
-  });
+function mockModrinth(gallery: GalleryImage[], { failOn, apiUrl = API_URL }: { failOn?: string; apiUrl?: string } = {}): Request[] {
+  const requests = recordRequests(server);
+  server.use(
+    http.get(`${apiUrl}/project/:project`, () => HttpResponse.json({ gallery })),
+    http.all(`${apiUrl}/project/:project/gallery`, ({ request }) =>
+      request.method === failOn ? new HttpResponse('Server error', { status: 500 }) : new HttpResponse(undefined, { status: 204 }),
+    ),
+  );
   return requests;
+}
+
+function describeRequests(requests: Request[]): string[] {
+  return requests.map(({ method, url }) => `${method} ${url}`);
 }
 
 describe('readInputs', () => {
@@ -149,19 +154,15 @@ describe('planSync', () => {
 });
 
 describe('applySync', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it('removes, then adds, then updates, so a renamed file cannot lose its new image', async () => {
     const folder = createFolder('crater.png', 'fireball.png');
     const fireball = createRemoteImage('Fireball', 7, false);
     const old = createRemoteImage('Old', 8, false);
-    const requests = stubModrinth([fireball, old]);
+    const requests = mockModrinth([fireball, old]);
 
     await applySync({ token: TOKEN, projectId: 'my-mod', images: folder, removeMissing: true }, API_URL);
 
-    expect(requests).toEqual([
+    expect(describeRequests(requests)).toEqual([
       `GET ${API_URL}/project/my-mod`,
       `DELETE ${API_URL}/project/my-mod/gallery?url=${encodeURIComponent(old.url)}`,
       `POST ${API_URL}/project/my-mod/gallery?ext=png&featured=true&title=Crater&ordering=0`,
@@ -171,39 +172,35 @@ describe('applySync', () => {
 
   it('stops at the first failed request', async () => {
     const folder = createFolder('crater.png', 'fireball.png');
-    const requests = stubModrinth([createRemoteImage('Fireball', 7, false)], 'POST');
+    const requests = mockModrinth([createRemoteImage('Fireball', 7, false)], { failOn: 'POST' });
 
     await expect(applySync({ token: TOKEN, projectId: 'my-mod', images: folder, removeMissing: false }, API_URL)).rejects.toThrow(
       'failed with status 500',
     );
-    expect(requests.some((request) => request.startsWith('PATCH'))).toBe(false);
+    expect(requests.some(({ method }) => method === 'PATCH')).toBe(false);
   });
 
   it('sends the contents of the file', async () => {
     const folder = createFolder('crater.png');
-    const bodies: unknown[] = [];
-    vi.stubGlobal('fetch', async (_url: string, init: RequestInit) => {
-      bodies.push(init.body);
-      return init.method === 'GET' ? new Response('{"gallery":[]}') : new Response(undefined, { status: 204 });
-    });
+    const requests = mockModrinth([]);
 
     await applySync({ token: TOKEN, projectId: 'my-mod', images: folder, removeMissing: false }, API_URL);
 
-    expect(String(bodies[1])).toBe('contents of crater.png');
+    await expect(requests.find(({ method }) => method === 'POST')?.text()).resolves.toBe('contents of crater.png');
   });
 
   it('only reads the gallery when nothing changed', async () => {
     const folder = createFolder('crater.png');
-    const requests = stubModrinth([createRemoteImage('Crater', 0)]);
+    const requests = mockModrinth([createRemoteImage('Crater', 0)]);
 
     await applySync({ token: TOKEN, projectId: 'my-mod', images: folder, removeMissing: true }, API_URL);
 
-    expect(requests).toEqual([`GET ${API_URL}/project/my-mod`]);
+    expect(describeRequests(requests)).toEqual([`GET ${API_URL}/project/my-mod`]);
   });
 
   it('sends nothing when the folder has no images, even with remove-missing on', async () => {
     const folder = createFolder();
-    const requests = stubModrinth([createRemoteImage('Crater', 0)]);
+    const requests = mockModrinth([createRemoteImage('Crater', 0)]);
 
     await expect(applySync({ token: TOKEN, projectId: 'my-mod', images: folder, removeMissing: true }, API_URL)).rejects.toThrow(
       'has no images',
@@ -215,15 +212,14 @@ describe('applySync', () => {
 describe('syncGallery', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
   });
 
   it('syncs against the production API', async () => {
     stubInputs({ ...VALID_INPUTS, images: createFolder('crater.png') });
-    const requests = stubModrinth([]);
+    const requests = mockModrinth([], { apiUrl: 'https://api.modrinth.com/v2' });
 
     await syncGallery();
 
-    expect(requests[0]).toBe('GET https://api.modrinth.com/v2/project/blockpilot');
+    expect(describeRequests(requests)[0]).toBe('GET https://api.modrinth.com/v2/project/blockpilot');
   });
 });
