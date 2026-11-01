@@ -8,7 +8,7 @@ inputs:
     description: Numeric CurseForge project ID
     required: true
   file:
-    description: Path or glob that matches exactly one file
+    description: Path or glob that matches exactly one file. Folders and -sources or -javadoc jars are ignored
     required: true
   game-versions:
     description: Game versions the file supports, separated by commas or new lines
