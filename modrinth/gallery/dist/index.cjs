@@ -19621,11 +19621,15 @@ function info(message) {
 }
 
 // packages/core/src/action.ts
-function getRequired(name) {
-  return getInput(name, { required: true });
+function readRequired(name) {
+  const value = getInput(name, { required: true });
+  if (value === "") {
+    throw new Error(`Input required and not supplied: ${name}`);
+  }
+  return value;
 }
 function readToken() {
-  const token = getRequired("token");
+  const token = readRequired("token");
   if (/[\r\n]/.test(token)) {
     throw new Error("token must be a single line, so check the secret it comes from");
   }
@@ -25693,8 +25697,8 @@ function readImages(folder) {
 function readInputs() {
   return {
     token: readToken(),
-    projectId: getInput("project-id", { required: true }),
-    images: getInput("images", { required: true }),
+    projectId: readRequired("project-id"),
+    images: readRequired("images"),
     removeMissing: getBooleanInput("remove-missing", { required: true })
   };
 }

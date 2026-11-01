@@ -112,8 +112,8 @@ describe('readInputs', () => {
     expect(readInputs()).toMatchObject({ projectId: '123456', versionNumber: '1.0.0+1.21.1-neoforge' });
   });
 
-  it('requires a version number', () => {
-    stubInputs({ ...VALID_UPLOAD_INPUTS, 'version-number': '' });
+  it.each(['', '   '])('requires a version number, rejecting %j', (versionNumber) => {
+    stubInputs({ ...VALID_UPLOAD_INPUTS, 'version-number': versionNumber });
 
     expect(() => readInputs()).toThrow('version-number');
   });

@@ -1,8 +1,8 @@
-import { getInput, info, setOutput, warning } from '@actions/core';
+import { info, setOutput, warning } from '@actions/core';
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 
-import { findSingleFile, readUploadInputs } from '@mod-publish-actions/core';
+import { findSingleFile, readRequired, readUploadInputs } from '@mod-publish-actions/core';
 import type { UploadInputs } from '@mod-publish-actions/core';
 import type { ExistingVersion } from '@mod-publish-actions/modrinth';
 import { findVersion, getProjectId, MODRINTH_API_URL, postVersion } from '@mod-publish-actions/modrinth';
@@ -20,7 +20,7 @@ export type ModrinthUploadInputs = UploadInputs & {
 };
 
 export function readInputs(): ModrinthUploadInputs {
-  return { ...readUploadInputs(), versionNumber: getInput('version-number', { required: true }) };
+  return { ...readUploadInputs(), versionNumber: readRequired('version-number') };
 }
 
 function assertCoversFile(existing: ExistingVersion, { versionNumber, loaders, gameVersions }: ModrinthUploadInputs): void {

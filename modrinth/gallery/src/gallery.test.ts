@@ -76,6 +76,12 @@ describe('readInputs', () => {
     expect(() => readInputs()).toThrow('token');
   });
 
+  it.each(['project-id', 'images'])('rejects a %s that is only whitespace', (name) => {
+    stubInputs({ ...VALID_INPUTS, [name]: '   ' });
+
+    expect(() => readInputs()).toThrow(name);
+  });
+
   it('rejects a remove-missing value that is not a boolean', () => {
     stubInputs({ ...VALID_INPUTS, 'remove-missing': 'sometimes' });
 

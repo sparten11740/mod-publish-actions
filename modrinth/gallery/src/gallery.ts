@@ -1,7 +1,7 @@
-import { getBooleanInput, getInput, info } from '@actions/core';
+import { getBooleanInput, info } from '@actions/core';
 import { readFile } from 'node:fs/promises';
 
-import { readToken } from '@mod-publish-actions/core';
+import { readRequired, readToken } from '@mod-publish-actions/core';
 import { addGalleryImage, deleteGalleryImage, getGallery, MODRINTH_API_URL, modifyGalleryImage } from '@mod-publish-actions/modrinth';
 import type { GalleryImage, GalleryImageChange } from '@mod-publish-actions/modrinth';
 
@@ -24,8 +24,8 @@ type SyncPlan = {
 export function readInputs(): GalleryInputs {
   return {
     token: readToken(),
-    projectId: getInput('project-id', { required: true }),
-    images: getInput('images', { required: true }),
+    projectId: readRequired('project-id'),
+    images: readRequired('images'),
     removeMissing: getBooleanInput('remove-missing', { required: true }),
   };
 }

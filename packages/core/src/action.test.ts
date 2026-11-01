@@ -28,6 +28,12 @@ describe('readToken', () => {
     expect(() => readToken()).not.toThrow('second-part');
   });
 
+  it('rejects a token with a bare carriage return', () => {
+    stubInputs({ token: 'first-part\rsecond-part' });
+
+    expect(() => readToken()).toThrow('token must be a single line');
+  });
+
   it('requires a token', () => {
     stubInputs({ token: '' });
 
@@ -76,6 +82,21 @@ describe('readUploadInputs', () => {
       displayName: undefined,
       dependencies: [{ project: 'fabric-api', type: 'required' }],
     });
+  });
+
+  it.each(['token', 'project-id', 'file', 'game-versions', 'loaders', 'environment', 'release-type'])(
+    'rejects a %s that is only whitespace, naming the input',
+    (name) => {
+      stubInputs({ ...VALID_UPLOAD_INPUTS, [name]: '   ' });
+
+      expect(() => readUploadInputs()).toThrow(name);
+    },
+  );
+
+  it.each(['game-versions', 'loaders'])('rejects %s holding only separators, naming the input', (name) => {
+    stubInputs({ ...VALID_UPLOAD_INPUTS, [name]: ', ,\n,' });
+
+    expect(() => readUploadInputs()).toThrow(`${name} must list at least one value`);
   });
 
   it('names a missing required input', () => {

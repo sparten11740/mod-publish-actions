@@ -23,12 +23,24 @@ export type UploadInputs = {
   dependencies: Dependency[];
 };
 
-function getRequired(name: string): string {
-  return getInput(name, { required: true });
+export function readRequired(name: string): string {
+  const value = getInput(name, { required: true });
+  if (value === '') {
+    throw new Error(`Input required and not supplied: ${name}`);
+  }
+  return value;
+}
+
+function readRequiredList(name: string): string[] {
+  const entries = parseList(readRequired(name));
+  if (entries.length === 0) {
+    throw new Error(`${name} must list at least one value`);
+  }
+  return entries;
 }
 
 export function readToken(): string {
-  const token = getRequired('token');
+  const token = readRequired('token');
   if (/[\r\n]/.test(token)) {
     throw new Error('token must be a single line, so check the secret it comes from');
   }
@@ -52,12 +64,12 @@ export function readChangelog(changelog: string, changelogFile: string): string 
 export function readUploadInputs(): UploadInputs {
   return {
     token: readToken(),
-    projectId: getRequired('project-id'),
-    file: getRequired('file'),
-    gameVersions: parseList(getRequired('game-versions')),
-    loaders: parseList(getRequired('loaders')),
-    environment: parseChoice('environment', getRequired('environment'), ENVIRONMENTS),
-    releaseType: parseChoice('release-type', getRequired('release-type'), RELEASE_TYPES),
+    projectId: readRequired('project-id'),
+    file: readRequired('file'),
+    gameVersions: readRequiredList('game-versions'),
+    loaders: readRequiredList('loaders'),
+    environment: parseChoice('environment', readRequired('environment'), ENVIRONMENTS),
+    releaseType: parseChoice('release-type', readRequired('release-type'), RELEASE_TYPES),
     changelog: readChangelog(getInput('changelog'), getInput('changelog-file')),
     displayName: getInput('display-name') || undefined,
     dependencies: parseDependencies(getInput('dependencies')),

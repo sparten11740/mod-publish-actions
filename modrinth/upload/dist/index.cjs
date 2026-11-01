@@ -19677,11 +19677,22 @@ function parseDependencies(value) {
 // packages/core/src/action.ts
 var ENVIRONMENTS = ["client", "server", "both"];
 var RELEASE_TYPES = ["alpha", "beta", "release"];
-function getRequired(name) {
-  return getInput(name, { required: true });
+function readRequired(name) {
+  const value = getInput(name, { required: true });
+  if (value === "") {
+    throw new Error(`Input required and not supplied: ${name}`);
+  }
+  return value;
+}
+function readRequiredList(name) {
+  const entries = parseList(readRequired(name));
+  if (entries.length === 0) {
+    throw new Error(`${name} must list at least one value`);
+  }
+  return entries;
 }
 function readToken() {
-  const token = getRequired("token");
+  const token = readRequired("token");
   if (/[\r\n]/.test(token)) {
     throw new Error("token must be a single line, so check the secret it comes from");
   }
@@ -19703,12 +19714,12 @@ function readChangelog(changelog, changelogFile) {
 function readUploadInputs() {
   return {
     token: readToken(),
-    projectId: getRequired("project-id"),
-    file: getRequired("file"),
-    gameVersions: parseList(getRequired("game-versions")),
-    loaders: parseList(getRequired("loaders")),
-    environment: parseChoice("environment", getRequired("environment"), ENVIRONMENTS),
-    releaseType: parseChoice("release-type", getRequired("release-type"), RELEASE_TYPES),
+    projectId: readRequired("project-id"),
+    file: readRequired("file"),
+    gameVersions: readRequiredList("game-versions"),
+    loaders: readRequiredList("loaders"),
+    environment: parseChoice("environment", readRequired("environment"), ENVIRONMENTS),
+    releaseType: parseChoice("release-type", readRequired("release-type"), RELEASE_TYPES),
     changelog: readChangelog(getInput("changelog"), getInput("changelog-file")),
     displayName: getInput("display-name") || void 0,
     dependencies: parseDependencies(getInput("dependencies"))
@@ -25708,7 +25719,7 @@ var ENVIRONMENTS2 = {
   both: "client_and_server"
 };
 function readInputs() {
-  return { ...readUploadInputs(), versionNumber: getInput("version-number", { required: true }) };
+  return { ...readUploadInputs(), versionNumber: readRequired("version-number") };
 }
 function assertCoversFile(existing, { versionNumber, loaders, gameVersions }) {
   const uncovered = [
