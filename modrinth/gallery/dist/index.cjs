@@ -25498,6 +25498,7 @@ function superRefine(fn, params) {
 var USER_AGENT = "sparten11740/mod-publish-actions";
 var REQUEST_TIMEOUT_MILLISECONDS = 3e5;
 var MAX_REPORTED_BODY_LENGTH = 500;
+var SECRET_HEADER = /authorization|token/i;
 function describeFailure(error3) {
   const reason = error3 instanceof Error ? error3.cause ?? error3 : error3;
   const code = reason instanceof Object && "code" in reason && typeof reason.code === "string" ? ` (${reason.code})` : "";
@@ -25505,6 +25506,9 @@ function describeFailure(error3) {
 }
 function summarizeBody(text) {
   return text.length > MAX_REPORTED_BODY_LENGTH ? `${text.slice(0, MAX_REPORTED_BODY_LENGTH)}...` : text;
+}
+function redactSecrets(text, headers = {}) {
+  return Object.entries(headers).filter(([name]) => SECRET_HEADER.test(name)).reduce((redacted, [, value]) => redacted.replaceAll(value, "[redacted]"), text);
 }
 function parseJson(text) {
   try {
@@ -25521,7 +25525,7 @@ async function sendRequest(url, { method, headers, body }) {
       body,
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS)
     });
-    return { response, text: await response.text() };
+    return { response, text: redactSecrets(await response.text(), headers) };
   } catch (error3) {
     throw new Error(`${method} ${url} failed: ${describeFailure(error3)}`, { cause: error3 });
   }

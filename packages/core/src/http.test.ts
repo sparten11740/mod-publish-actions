@@ -45,6 +45,24 @@ describe('sendRequest', () => {
     await expect(requests[0]?.text()).resolves.toBe('data');
   });
 
+  it.each(['Authorization', 'X-Api-Token'])('removes a token sent as %s from the reply, because servers can echo it', async (header) => {
+    server.use(
+      http.post(URL_UNDER_TEST, () => new HttpResponse('{"error":"Token provided: secret-token, again secret-token"}', { status: 400 })),
+    );
+
+    const { text } = await sendRequest(URL_UNDER_TEST, { method: 'POST', headers: { [header]: 'secret-token' } });
+
+    expect(text).toBe('{"error":"Token provided: [redacted], again [redacted]"}');
+  });
+
+  it('leaves the values of other headers in the reply', async () => {
+    server.use(http.post(URL_UNDER_TEST, () => new HttpResponse('expected image/png')));
+
+    const { text } = await sendRequest(URL_UNDER_TEST, { method: 'POST', headers: { 'Content-Type': 'image/png' } });
+
+    expect(text).toBe('expected image/png');
+  });
+
   it('sets a timeout on every request', async () => {
     const timeout = vi.spyOn(AbortSignal, 'timeout');
     server.use(http.get(URL_UNDER_TEST, () => new HttpResponse('ok')));

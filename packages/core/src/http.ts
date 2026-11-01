@@ -3,6 +3,7 @@ import * as zod from 'zod/v4';
 const USER_AGENT = 'sparten11740/mod-publish-actions';
 const REQUEST_TIMEOUT_MILLISECONDS = 300_000;
 const MAX_REPORTED_BODY_LENGTH = 500;
+const SECRET_HEADER = /authorization|token/i;
 
 export type HttpRequest = {
   method: string;
@@ -25,6 +26,12 @@ function summarizeBody(text: string): string {
   return text.length > MAX_REPORTED_BODY_LENGTH ? `${text.slice(0, MAX_REPORTED_BODY_LENGTH)}...` : text;
 }
 
+function redactSecrets(text: string, headers: Record<string, string> = {}): string {
+  return Object.entries(headers)
+    .filter(([name]) => SECRET_HEADER.test(name))
+    .reduce((redacted, [, value]) => redacted.replaceAll(value, '[redacted]'), text);
+}
+
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);
@@ -41,7 +48,7 @@ export async function sendRequest(url: string, { method, headers, body }: HttpRe
       body,
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS),
     });
-    return { response, text: await response.text() };
+    return { response, text: redactSecrets(await response.text(), headers) };
   } catch (error) {
     throw new Error(`${method} ${url} failed: ${describeFailure(error)}`, { cause: error });
   }
