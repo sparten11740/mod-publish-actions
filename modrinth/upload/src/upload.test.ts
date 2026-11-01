@@ -266,6 +266,31 @@ describe('publishVersion', () => {
     });
   });
 
+  it('sends every dependency type', async () => {
+    mockModrinth({ project: () => respondWithId('P7dR8mSH') });
+
+    await publishVersion(
+      createInputs({
+        dependencies: [
+          { project: 'first', type: 'required' },
+          { project: 'second', type: 'optional' },
+          { project: 'third', type: 'embedded' },
+          { project: 'fourth', type: 'incompatible' },
+        ],
+      }),
+      API_URL,
+    );
+
+    expect(readUploadedData()).toMatchObject({
+      dependencies: [
+        { project_id: 'P7dR8mSH', dependency_type: 'required' },
+        { project_id: 'P7dR8mSH', dependency_type: 'optional' },
+        { project_id: 'P7dR8mSH', dependency_type: 'embedded' },
+        { project_id: 'P7dR8mSH', dependency_type: 'incompatible' },
+      ],
+    });
+  });
+
   it('publishes nothing when a dependency cannot be found', async () => {
     const requests = mockModrinth();
 
@@ -284,13 +309,13 @@ describe('publishVersion', () => {
     expect(requests).toEqual([]);
   });
 
-  it('reports the status and body of a rejected upload, without the token', async () => {
-    mockModrinth({ upload: () => new HttpResponse('{"error":"unauthorized","description":"Bad token"}', { status: 401 }) });
+  it('reports the status and body of a rejected upload, without the token even when the server repeats it', async () => {
+    mockModrinth({ upload: () => new HttpResponse(`{"error":"unauthorized","description":"Bad token ${TOKEN}"}`, { status: 401 }) });
 
     const failure = await publishVersion(createInputs(), API_URL).catch((error: unknown) => String(error));
 
     expect(failure).toContain(`POST ${UPLOAD_URL} failed with status 401`);
-    expect(failure).toContain('Bad token');
+    expect(failure).toContain('Bad token [redacted]');
     expect(failure).not.toContain(TOKEN);
   });
 

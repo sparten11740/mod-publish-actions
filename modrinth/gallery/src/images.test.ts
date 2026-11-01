@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, symlinkSync, truncateSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readImages } from './images';
 
@@ -16,6 +16,10 @@ function createFolder(...files: string[]): string {
 }
 
 describe('readImages', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('orders images by file name, treating numbers as numbers', () => {
     const folder = createFolder('10-last.png', '2-second.png', '1-first.png');
 
@@ -48,7 +52,7 @@ describe('readImages', () => {
   });
 
   it('ignores hidden files, folders and files that are not images', () => {
-    const folder = createFolder('crater.png', '.DS_Store', 'notes.txt');
+    const folder = createFolder('crater.png', '.DS_Store', '.hidden.png', 'notes.txt');
     mkdirSync(join(folder, 'nested.png'));
 
     expect(readImages(folder).map(({ title }) => title)).toEqual(['Crater']);
@@ -62,7 +66,6 @@ describe('readImages', () => {
 
     expect(readImages(folder).map(({ title }) => title)).toEqual(['Crater']);
     expect(write).toHaveBeenCalledWith(expect.stringContaining('linked.png, nested, notes.txt'));
-    vi.restoreAllMocks();
   });
 
   it('rejects a file name that gives an empty title', () => {

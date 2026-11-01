@@ -114,8 +114,8 @@ describe('deleteGalleryImage', () => {
     expect(requests[0]?.headers.get('authorization')).toBe(TOKEN);
   });
 
-  it('reports a rejected request without the token', async () => {
-    mockModrinth(() => new HttpResponse('{"error":"unauthorized"}', { status: 401 }));
+  it('reports a rejected request without the token, even when the server repeats it', async () => {
+    mockModrinth(() => new HttpResponse(`{"error":"unauthorized","token":"${TOKEN}"}`, { status: 401 }));
 
     const failure = await deleteGalleryImage(API_URL, TOKEN, 'my-mod', IMAGE_URL).catch((error: unknown) => String(error));
 

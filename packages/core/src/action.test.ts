@@ -3,8 +3,32 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { readChangelog, readToken, readUploadInputs } from './action';
+import { readChangelog, readToken, readUploadInputs, runAction } from './action';
 import { stubInputs, VALID_UPLOAD_INPUTS } from './testing';
+
+describe('runAction', () => {
+  afterEach(() => {
+    process.exitCode = undefined;
+    vi.restoreAllMocks();
+  });
+
+  it('fails the step with the error message when the action throws', async () => {
+    const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+
+    await runAction(async () => {
+      throw new Error('Upload rejected');
+    });
+
+    expect(process.exitCode).toBe(1);
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('::error::Upload rejected'));
+  });
+
+  it('leaves the step passing when the action succeeds', async () => {
+    await runAction(async () => undefined);
+
+    expect(process.exitCode).toBeUndefined();
+  });
+});
 
 describe('readToken', () => {
   afterEach(() => {
@@ -97,6 +121,20 @@ describe('readUploadInputs', () => {
     stubInputs({ ...VALID_UPLOAD_INPUTS, [name]: ', ,\n,' });
 
     expect(() => readUploadInputs()).toThrow(`${name} must list at least one value`);
+  });
+
+  it('reads the display name from display-name', () => {
+    stubInputs({ ...VALID_UPLOAD_INPUTS, 'display-name': 'My Mod 1.0.0' });
+
+    expect(readUploadInputs().displayName).toBe('My Mod 1.0.0');
+  });
+
+  it('reads the changelog from changelog-file', () => {
+    const changelogFile = join(mkdtempSync(join(tmpdir(), 'changelog-')), 'CHANGELOG.md');
+    writeFileSync(changelogFile, '## 1.0.0');
+    stubInputs({ ...VALID_UPLOAD_INPUTS, changelog: '', 'changelog-file': changelogFile });
+
+    expect(readUploadInputs().changelog).toBe('## 1.0.0');
   });
 
   it('names a missing required input', () => {

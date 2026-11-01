@@ -55,6 +55,14 @@ describe('sendRequest', () => {
     expect(text).toBe('{"error":"Token provided: [redacted], again [redacted]"}');
   });
 
+  it('removes a token from a successful reply too, because unexpected replies get printed', async () => {
+    server.use(http.get(URL_UNDER_TEST, () => new HttpResponse('Welcome, secret-token')));
+
+    const { text } = await sendRequest(URL_UNDER_TEST, { method: 'GET', headers: { Authorization: 'secret-token' } });
+
+    expect(text).toBe('Welcome, [redacted]');
+  });
+
   it('leaves the values of other headers in the reply', async () => {
     server.use(http.post(URL_UNDER_TEST, () => new HttpResponse('expected image/png')));
 

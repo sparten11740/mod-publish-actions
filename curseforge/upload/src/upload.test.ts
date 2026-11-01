@@ -230,13 +230,15 @@ describe('publishFile', () => {
     expect(requests).toEqual([]);
   });
 
-  it('reports the status and body of a rejected upload, without the token', async () => {
-    mockCurseforge(() => new HttpResponse('{"errorCode":1009,"errorMessage":"Invalid game version"}', { status: 400 }));
+  it('reports the status and body of a rejected upload, without the token even when the server repeats it', async () => {
+    mockCurseforge(
+      () => new HttpResponse(`{"errorCode":3,"errorMessage":"API token is malformed. Token provided: ${TOKEN}."}`, { status: 400 }),
+    );
 
     const failure = await publishFile(createInputs(), API_URL).catch((error: unknown) => String(error));
 
     expect(failure).toContain(`POST ${UPLOAD_URL} failed with status 400`);
-    expect(failure).toContain('Invalid game version');
+    expect(failure).toContain('Token provided: [redacted]');
     expect(failure).not.toContain(TOKEN);
   });
 

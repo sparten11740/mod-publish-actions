@@ -145,6 +145,19 @@ describe('planSync', () => {
     expect(planSync(local, remote, true).remove).toEqual([remote[1]]);
   });
 
+  it('leaves a stale featured image alone when it is being deleted anyway', () => {
+    const local = [createLocalImage('Crater', 0)];
+    const old = createRemoteImage('Old', 4, true);
+
+    expect(planSync(local, [old], true)).toEqual({ add: local, modify: [], remove: [old] });
+  });
+
+  it('plans nothing for an extra image that is kept and not featured, so a re-run changes nothing', () => {
+    const plan = planSync([createLocalImage('Crater', 0)], [createRemoteImage('Crater', 0), createRemoteImage('Old', 4, false)], false);
+
+    expect(plan).toEqual({ add: [], modify: [], remove: [] });
+  });
+
   it('treats an untitled image as not in the folder', () => {
     const untitled = createRemoteImage(undefined, 1);
 
@@ -160,6 +173,10 @@ describe('planSync', () => {
 });
 
 describe('applySync', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('removes, then adds, then updates, so a renamed file cannot lose its new image', async () => {
     const folder = createFolder('crater.png', 'fireball.png');
     const fireball = createRemoteImage('Fireball', 7, false);
@@ -187,18 +204,28 @@ describe('applySync', () => {
   });
 
   it('logs each change before making it, so a later failure still leaves a record of what was removed', async () => {
-    const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    const events: string[] = [];
+    vi.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array) => {
+      events.push(String(chunk));
+      return true;
+    });
     const folder = createFolder('crater.png');
     const old = createRemoteImage('Old', 8, false);
     mockModrinth([old], { failOn: 'POST' });
+    server.events.on('request:start', ({ request }) => {
+      events.push(`request ${request.method}`);
+    });
 
     await expect(applySync({ token: TOKEN, projectId: 'my-mod', images: folder, removeMissing: true }, API_URL)).rejects.toThrow(
       'failed with status 500',
     );
 
-    expect(write).toHaveBeenCalledWith(expect.stringContaining(`Removing Old: ${old.url}`));
-    expect(write).toHaveBeenCalledWith(expect.stringContaining('Adding Crater'));
-    vi.restoreAllMocks();
+    const removal = events.findIndex((event) => event.includes(`Removing Old: ${old.url}`));
+    const addition = events.findIndex((event) => event.includes('Adding Crater'));
+    expect(removal).toBeGreaterThanOrEqual(0);
+    expect(removal).toBeLessThan(events.indexOf('request DELETE'));
+    expect(addition).toBeGreaterThanOrEqual(0);
+    expect(addition).toBeLessThan(events.indexOf('request POST'));
   });
 
   it('sends the contents of the file', async () => {
