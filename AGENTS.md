@@ -43,6 +43,7 @@ Skills must work in any agent. Use only the standard frontmatter fields (`name`,
 ## Code conventions
 
 - kebab-case file names, `type` aliases rather than `interface`, and named exports.
+- No file for a single function named after it, such as `find-single-file.ts`. Put functions in a module named for their topic, such as `fs.ts`, which related helpers can join.
 - No code comments, except the version comment after a pinned action.
 - Never `null`; use `undefined`.
 - No single-letter names.

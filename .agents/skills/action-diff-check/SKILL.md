@@ -66,6 +66,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 - **Type escapes:** `as X` (except `as const`), non-null `!`, `any`, `@ts-ignore`, `@ts-expect-error`.
 - **`null`:** use `undefined`.
 - **Leftovers:** `console.*` (use `@actions/core` logging), `TODO`/`FIXME`, commented-out code, `.only`, `.skip`, real tokens or keys.
+- **Commands:** `exec`, `execSync` or `promisify(exec)` from `node:child_process`, `shell: true`, and any variable inside the command line string passed to `@actions/exec`.
 - **Action references:** every `uses:` is a full 40-character commit SHA followed by its version in a comment.
 
 ## 5. Review each dimension
@@ -81,7 +82,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 
 **Action contract**
 
-- `action.yml`, `read-inputs.ts` and the README agree: every declared input is read, every input read is declared, and required flags, defaults and allowed values match.
+- `action.yml`, the code reading the inputs and the README agree: every declared input is read, every input read is declared, and required flags, defaults and allowed values match.
 - Renaming or removing an input or output, or changing a default or its meaning, breaks users because tags cover the whole repository. That is a **Blocker** unless the user asked for it. Adding an optional input is fine.
 - The same concept uses the same input name and values on every platform, and each action translates them for its API. Platform-only inputs stay in that action.
 - `runs` stays `using: node24` with `main: dist/index.cjs`.
@@ -94,14 +95,17 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
   - CurseForge: https://support.curseforge.com/en/support/solutions/articles/9000197321-curseforge-api
   - Modrinth: https://docs.modrinth.com/api/
 - CurseForge: the token goes in the `X-Api-Token` header, never the `token` query parameter. Ambiguous game version names resolve to one exact entry or fail.
-- Modrinth: every request sends a uniquely identifying `User-Agent`. Tokens need only the scope in use (`VERSION_CREATE` or `PROJECT_WRITE`). Rate limit responses are handled.
+- Modrinth: every request sends a uniquely identifying `User-Agent`. Tokens need only the scope in use (`VERSION_CREATE` or `PROJECT_WRITE`). A rate limit response gives a failure message saying how long to wait, and is retried only when the request is safe to repeat.
 - Every network call has a timeout. Only safe requests are retried, because retrying an upload could publish it twice.
 - Gallery sync creates no duplicates on a re-run, deletes nothing unless `remove-missing` is true, and fails early on files over Modrinth's 5 MiB limit.
 
 **Security and supply chain**
 
 - Tokens never appear in logs, error messages, URLs or test fixtures. Check any code that logs a request or response.
-- User inputs never reach a shell command.
+- Commands never run through a shell, because a value containing shell syntax could then run commands of its own. `exec`, `execSync`, `promisify(exec)` and `shell: true` from `node:child_process` are a **Blocker**, even when the values look trusted.
+- Run commands with `execFileSync`, or with `execFile` or `spawn` without a shell, and pass arguments as an array.
+- `exec` from `@actions/exec` is also fine, because it spawns normal programs without a shell. It does split its command line string into arguments, so that string must be a fixed tool name, with every variable value in its `args` array.
+- A value that could start with `-` can't be read as an option, for example because it follows `--`.
 - Workflows have minimal `permissions`, don't use `pull_request_target`, don't put untrusted `${{ }}` values inside `run:`, and pass secrets only to the steps that need them.
 - The version comment after each pinned action matches its SHA. Confirm new or changed pins with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`.
 - `minimumReleaseAge` isn't lowered, `minimumReleaseAgeExclude` isn't added, and `allowBuilds` isn't widened without the user asking.
@@ -131,6 +135,7 @@ test "$before" = "$(shasum */*/dist/index.cjs)"
 - kebab-case files and named exports.
 - Imports ordered as packages, then `@mod-publish-actions/`, then relative.
 - Functions small enough to read in one go.
+- No file for a single function named after it, such as `find-single-file.ts`. Functions live in a module named for their topic, such as `fs.ts`, which related helpers can join. Only `index.ts` entry points are exempt.
 
 **Open/closed**
 
