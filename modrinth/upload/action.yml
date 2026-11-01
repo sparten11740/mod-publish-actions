@@ -5,13 +5,13 @@ inputs:
     description: Modrinth personal access token with the VERSION_CREATE scope
     required: true
   project-id:
-    description: Modrinth project ID
+    description: Modrinth project ID, not its slug
     required: true
   file:
-    description: Path or glob that matches exactly one file
+    description: Path or glob that matches exactly one file. Folders and -sources or -javadoc jars are ignored
     required: true
   version-number:
-    description: Version number of the new Modrinth version
+    description: Version number of the new Modrinth version. If it already exists on a public project, nothing is uploaded and a warning is logged
     required: true
   game-versions:
     description: Game versions the file supports, separated by commas or new lines
@@ -20,7 +20,7 @@ inputs:
     description: Mod loaders the file supports, separated by commas or new lines
     required: true
   environment:
-    description: Where the mod runs, one of client, server or both
+    description: Where the mod runs, one of client, server or both. both means it must be installed on the client and the server
     required: true
   release-type:
     description: One of alpha, beta or release
@@ -32,14 +32,14 @@ inputs:
     description: Path to a Markdown changelog. Set this or changelog
     required: false
   display-name:
-    description: Name shown on Modrinth for this version
+    description: Name shown on Modrinth for this version. Defaults to version-number
     required: false
   dependencies:
-    description: Entries of project:type, separated by commas or new lines. Types are required, optional, embedded and incompatible
+    description: Entries of project-slug-or-id:type, separated by commas or new lines. Types are required, optional, embedded and incompatible
     required: false
 outputs:
   version-id:
-    description: ID of the new version
+    description: ID of the new version, or of the existing version with the same number
 runs:
   using: node24
   main: dist/index.cjs

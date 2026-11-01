@@ -2,7 +2,7 @@
 
 GitHub Actions for publishing Minecraft mods to CurseForge and Modrinth.
 
-**Status:** scaffold. The inputs are defined and validated, but every action fails with "not implemented" until its API calls are written.
+**Status:** early development. `modrinth/upload` is implemented but has not published to Modrinth yet. The other actions validate their inputs, then fail with "not implemented" until their API calls are written.
 
 | Action              | Purpose                                       |
 | ------------------- | --------------------------------------------- |

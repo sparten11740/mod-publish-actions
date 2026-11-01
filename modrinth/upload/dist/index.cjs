@@ -4081,11 +4081,11 @@ var require_util2 = __commonJS({
     var { isUint8Array } = require("node:util/types");
     var { webidl } = require_webidl();
     var supportedHashes = [];
-    var crypto;
+    var crypto2;
     try {
-      crypto = require("node:crypto");
+      crypto2 = require("node:crypto");
       const possibleRelevantHashes = ["sha256", "sha384", "sha512"];
-      supportedHashes = crypto.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
+      supportedHashes = crypto2.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
     } catch {
     }
     function responseURL(response) {
@@ -4358,7 +4358,7 @@ var require_util2 = __commonJS({
       }
     }
     function bytesMatch(bytes, metadataList) {
-      if (crypto === void 0) {
+      if (crypto2 === void 0) {
         return true;
       }
       const parsedMetadata = parseMetadata(metadataList);
@@ -4373,7 +4373,7 @@ var require_util2 = __commonJS({
       for (const item of metadata) {
         const algorithm = item.algo;
         const expectedValue = item.hash;
-        let actualValue = crypto.createHash(algorithm).update(bytes).digest("base64");
+        let actualValue = crypto2.createHash(algorithm).update(bytes).digest("base64");
         if (actualValue[actualValue.length - 1] === "=") {
           if (actualValue[actualValue.length - 2] === "=") {
             actualValue = actualValue.slice(0, -2);
@@ -4954,7 +4954,7 @@ var require_symbols2 = __commonJS({
 var require_file = __commonJS({
   "node_modules/.pnpm/undici@6.29.1/node_modules/undici/lib/web/fetch/file.js"(exports2, module2) {
     "use strict";
-    var { Blob: Blob2, File } = require("node:buffer");
+    var { Blob: Blob2, File: File2 } = require("node:buffer");
     var { kState } = require_symbols2();
     var { webidl } = require_webidl();
     var FileLike = class _FileLike {
@@ -5007,7 +5007,7 @@ var require_file = __commonJS({
     };
     webidl.converters.Blob = webidl.interfaceConverter(Blob2);
     function isFileLike(object) {
-      return object instanceof File || object && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && object[Symbol.toStringTag] === "File";
+      return object instanceof File2 || object && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && object[Symbol.toStringTag] === "File";
     }
     module2.exports = { FileLike, isFileLike };
   }
@@ -5024,8 +5024,8 @@ var require_formdata = __commonJS({
     var { webidl } = require_webidl();
     var { File: NativeFile } = require("node:buffer");
     var nodeUtil = require("node:util");
-    var File = globalThis.File ?? NativeFile;
-    var FormData = class _FormData {
+    var File2 = globalThis.File ?? NativeFile;
+    var FormData2 = class _FormData {
       constructor(form) {
         webidl.util.markAsUncloneable(this);
         if (form !== void 0) {
@@ -5127,8 +5127,8 @@ var require_formdata = __commonJS({
         return `FormData ${output.slice(output.indexOf("]") + 2)}`;
       }
     };
-    iteratorMixin("FormData", FormData, kState, "name", "value");
-    Object.defineProperties(FormData.prototype, {
+    iteratorMixin("FormData", FormData2, kState, "name", "value");
+    Object.defineProperties(FormData2.prototype, {
       append: kEnumerableProperty,
       delete: kEnumerableProperty,
       get: kEnumerableProperty,
@@ -5144,19 +5144,19 @@ var require_formdata = __commonJS({
       if (typeof value === "string") {
       } else {
         if (!isFileLike(value)) {
-          value = value instanceof Blob ? new File([value], "blob", { type: value.type }) : new FileLike(value, "blob", { type: value.type });
+          value = value instanceof Blob ? new File2([value], "blob", { type: value.type }) : new FileLike(value, "blob", { type: value.type });
         }
         if (filename !== void 0) {
           const options = {
             type: value.type,
             lastModified: value.lastModified
           };
-          value = value instanceof NativeFile ? new File([value], filename, options) : new FileLike(value, filename, options);
+          value = value instanceof NativeFile ? new File2([value], filename, options) : new FileLike(value, filename, options);
         }
       }
       return { name, value };
     }
-    module2.exports = { FormData, makeEntry };
+    module2.exports = { FormData: FormData2, makeEntry };
   }
 });
 
@@ -5171,7 +5171,7 @@ var require_formdata_parser = __commonJS({
     var { makeEntry } = require_formdata();
     var assert = require("node:assert");
     var { File: NodeFile } = require("node:buffer");
-    var File = globalThis.File ?? NodeFile;
+    var File2 = globalThis.File ?? NodeFile;
     var formDataNameBuffer = Buffer.from('form-data; name="');
     var filenameBuffer = Buffer.from("; filename");
     var dd = Buffer.from("--");
@@ -5258,7 +5258,7 @@ var require_formdata_parser = __commonJS({
           if (!isAsciiString(contentType)) {
             contentType = "";
           }
-          value = new File([body], filename, { type: contentType });
+          value = new File2([body], filename, { type: contentType });
         } else {
           value = utf8DecodeBytes(Buffer.from(body));
         }
@@ -5426,7 +5426,7 @@ var require_body = __commonJS({
       extractMimeType,
       utf8DecodeBytes
     } = require_util2();
-    var { FormData } = require_formdata();
+    var { FormData: FormData2 } = require_formdata();
     var { kState } = require_symbols2();
     var { webidl } = require_webidl();
     var { Blob: Blob2 } = require("node:buffer");
@@ -5437,8 +5437,8 @@ var require_body = __commonJS({
     var { multipartFormDataParser } = require_formdata_parser();
     var random;
     try {
-      const crypto = require("node:crypto");
-      random = (max) => crypto.randomInt(0, max);
+      const crypto2 = require("node:crypto");
+      random = (max) => crypto2.randomInt(0, max);
     } catch {
       random = (max) => Math.floor(Math.random(max));
     }
@@ -5646,13 +5646,13 @@ Content-Type: ${value.type || "application/octet-stream"}\r
                   if (parsed === "failure") {
                     throw new TypeError("Failed to parse body as FormData.");
                   }
-                  const fd = new FormData();
+                  const fd = new FormData2();
                   fd[kState] = parsed;
                   return fd;
                 }
                 case "application/x-www-form-urlencoded": {
                   const entries = new URLSearchParams(value.toString());
-                  const fd = new FormData();
+                  const fd = new FormData2();
                   for (const [name, value2] of entries) {
                     fd.append(name, value2);
                   }
@@ -12388,7 +12388,7 @@ var require_response = __commonJS({
     } = require_constants3();
     var { kState, kHeaders } = require_symbols2();
     var { webidl } = require_webidl();
-    var { FormData } = require_formdata();
+    var { FormData: FormData2 } = require_formdata();
     var { URLSerializer } = require_data_url();
     var { kConstruct } = require_symbols();
     var assert = require("node:assert");
@@ -12701,7 +12701,7 @@ var require_response = __commonJS({
       ReadableStream
     );
     webidl.converters.FormData = webidl.interfaceConverter(
-      FormData
+      FormData2
     );
     webidl.converters.URLSearchParams = webidl.interfaceConverter(
       URLSearchParams
@@ -13601,7 +13601,7 @@ var require_fetch = __commonJS({
     function handleFetchDone(response) {
       finalizeAndReportTiming(response, "fetch");
     }
-    function fetch(input, init = void 0) {
+    function fetch2(input, init = void 0) {
       webidl.argumentLengthCheck(arguments, 1, "globalThis.fetch");
       let p = createDeferredPromise();
       let requestObject;
@@ -14556,7 +14556,7 @@ var require_fetch = __commonJS({
       }
     }
     module2.exports = {
-      fetch,
+      fetch: fetch2,
       Fetch,
       fetching,
       finalizeAndReportTiming
@@ -17077,13 +17077,13 @@ var require_frame = __commonJS({
     "use strict";
     var { maxUnsigned16Bit } = require_constants5();
     var BUFFER_SIZE = 16386;
-    var crypto;
+    var crypto2;
     var buffer = null;
     var bufIdx = BUFFER_SIZE;
     try {
-      crypto = require("node:crypto");
+      crypto2 = require("node:crypto");
     } catch {
-      crypto = {
+      crypto2 = {
         // not full compatibility, but minimum.
         randomFillSync: function randomFillSync(buffer2, _offset, _size) {
           for (let i = 0; i < buffer2.length; ++i) {
@@ -17096,7 +17096,7 @@ var require_frame = __commonJS({
     function generateMask() {
       if (bufIdx === BUFFER_SIZE) {
         bufIdx = 0;
-        crypto.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
+        crypto2.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
       }
       return [buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++]];
     }
@@ -17168,9 +17168,9 @@ var require_connection = __commonJS({
     var { Headers: Headers2, getHeadersList } = require_headers();
     var { getDecodeSplit } = require_util2();
     var { WebsocketFrameSend } = require_frame();
-    var crypto;
+    var crypto2;
     try {
-      crypto = require("node:crypto");
+      crypto2 = require("node:crypto");
     } catch {
     }
     function establishWebSocketConnection(url, protocols, client, ws, onEstablish, options) {
@@ -17190,7 +17190,7 @@ var require_connection = __commonJS({
         const headersList = getHeadersList(new Headers2(options.headers));
         request.headersList = headersList;
       }
-      const keyValue = crypto.randomBytes(16).toString("base64");
+      const keyValue = crypto2.randomBytes(16).toString("base64");
       request.headersList.append("sec-websocket-key", keyValue);
       request.headersList.append("sec-websocket-version", "13");
       for (const protocol of protocols) {
@@ -17220,7 +17220,7 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto.createHash("sha1").update(keyValue + uid).digest("base64");
+          const digest = crypto2.createHash("sha1").update(keyValue + uid).digest("base64");
           if (secWSAccept !== digest) {
             failWebsocketConnection(ws, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
@@ -19094,7 +19094,7 @@ var require_undici = __commonJS({
     module2.exports.setGlobalDispatcher = setGlobalDispatcher;
     module2.exports.getGlobalDispatcher = getGlobalDispatcher;
     var fetchImpl = require_fetch().fetch;
-    module2.exports.fetch = async function fetch(init, options = void 0) {
+    module2.exports.fetch = async function fetch2(init, options = void 0) {
       try {
         return await fetchImpl(init, options);
       } catch (err) {
@@ -19213,6 +19213,37 @@ function escapeData(s) {
 function escapeProperty(s) {
   return toCommandValue(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/:/g, "%3A").replace(/,/g, "%2C");
 }
+
+// node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/file-command.js
+var crypto = __toESM(require("crypto"), 1);
+var fs = __toESM(require("fs"), 1);
+var os2 = __toESM(require("os"), 1);
+function issueFileCommand(command, message) {
+  const filePath = process.env[`GITHUB_${command}`];
+  if (!filePath) {
+    throw new Error(`Unable to find environment variable for file command ${command}`);
+  }
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Missing file at path: ${filePath}`);
+  }
+  fs.appendFileSync(filePath, `${toCommandValue(message)}${os2.EOL}`, {
+    encoding: "utf8"
+  });
+}
+function prepareKeyValueMessage(key, value) {
+  const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
+  const convertedValue = toCommandValue(value);
+  if (key.includes(delimiter)) {
+    throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+  }
+  if (convertedValue.includes(delimiter)) {
+    throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+  }
+  return `${key}<<${delimiter}${os2.EOL}${convertedValue}${os2.EOL}${delimiter}`;
+}
+
+// node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/core.js
+var os4 = __toESM(require("os"), 1);
 
 // node_modules/.pnpm/@actions+http-client@4.0.1/node_modules/@actions/http-client/lib/index.js
 var tunnel = __toESM(require_tunnel2(), 1);
@@ -19557,10 +19588,10 @@ var _summary = new Summary();
 var import_os2 = __toESM(require("os"), 1);
 
 // node_modules/.pnpm/@actions+io@3.0.2/node_modules/@actions/io/lib/io-util.js
-var fs = __toESM(require("fs"), 1);
-var { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs.promises;
+var fs2 = __toESM(require("fs"), 1);
+var { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs2.promises;
 var IS_WINDOWS = process.platform === "win32";
-var READONLY = fs.constants.O_RDONLY;
+var READONLY = fs2.constants.O_RDONLY;
 
 // node_modules/.pnpm/@actions+exec@3.0.0/node_modules/@actions/exec/lib/toolrunner.js
 var IS_WINDOWS2 = process.platform === "win32";
@@ -19585,12 +19616,26 @@ function getInput(name, options) {
   }
   return val.trim();
 }
+function setOutput(name, value) {
+  const filePath = process.env["GITHUB_OUTPUT"] || "";
+  if (filePath) {
+    return issueFileCommand("OUTPUT", prepareKeyValueMessage(name, value));
+  }
+  process.stdout.write(os4.EOL);
+  issueCommand("set-output", { name }, toCommandValue(value));
+}
 function setFailed(message) {
   process.exitCode = ExitCode.Failure;
   error(message);
 }
 function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+}
+function warning(message, properties = {}) {
+  issueCommand("warning", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+}
+function info(message) {
+  process.stdout.write(message + os4.EOL);
 }
 
 // packages/core/src/action.ts
@@ -19662,13 +19707,140 @@ async function runAction(action) {
   }
 }
 
+// packages/core/src/fs.ts
+var import_node_fs2 = require("node:fs");
+var import_node_path = require("node:path");
+var NON_RELEASE_JAR = /-(sources|javadoc)\.jar$/;
+function findSingleFile(pattern) {
+  const matches = (0, import_node_fs2.globSync)(pattern, { withFileTypes: true }).filter((entry) => entry.isFile() && !NON_RELEASE_JAR.test(entry.name)).map((entry) => (0, import_node_path.join)(entry.parentPath, entry.name));
+  const [match, ...others] = matches;
+  if (match === void 0) {
+    throw new Error(`file must match exactly one file, but "${pattern}" matched none. -sources and -javadoc jars are ignored`);
+  }
+  if (others.length > 0) {
+    throw new Error(`file must match exactly one file, but "${pattern}" matched ${matches.length}: ${matches.join(", ")}`);
+  }
+  return match;
+}
+
 // modrinth/upload/src/upload.ts
+var import_promises = require("node:fs/promises");
+var import_node_path2 = require("node:path");
+
+// modrinth/upload/src/modrinth-api.ts
+var USER_AGENT = "sparten11740/mod-publish-actions";
+var REQUEST_TIMEOUT_MILLISECONDS = 3e5;
+var MAX_REPORTED_BODY_LENGTH = 500;
+var NOT_FOUND = 404;
+var TOO_MANY_REQUESTS = 429;
+var PUBLIC_REQUEST = { method: "GET", headers: { "User-Agent": USER_AGENT } };
+function summarizeBody(text) {
+  return text.length > MAX_REPORTED_BODY_LENGTH ? `${text.slice(0, MAX_REPORTED_BODY_LENGTH)}...` : text;
+}
+function describeFailure(error2) {
+  const reason = error2 instanceof Error ? error2.cause ?? error2 : error2;
+  const code = reason instanceof Object && "code" in reason ? ` (${String(reason.code)})` : "";
+  return `${String(reason)}${code}`;
+}
+function parseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return void 0;
+  }
+}
+function parseId(text, url) {
+  const parsed = parseJson(text);
+  if (parsed instanceof Object && "id" in parsed && typeof parsed.id === "string") {
+    return parsed.id;
+  }
+  throw new Error(`${url} returned a response without an ID: ${summarizeBody(text)}`);
+}
+async function send(url, init) {
+  try {
+    const response = await fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS) });
+    return { response, text: await response.text() };
+  } catch (error2) {
+    throw new Error(`${init.method} ${url} failed: ${describeFailure(error2)}`, { cause: error2 });
+  }
+}
+function readId({ response, text }, url, init) {
+  if (response.status === TOO_MANY_REQUESTS) {
+    throw new Error(`${init.method} ${url} was rate limited, try again in ${response.headers.get("X-Ratelimit-Reset") ?? "a few"} seconds`);
+  }
+  if (!response.ok) {
+    throw new Error(`${init.method} ${url} failed with status ${response.status}: ${summarizeBody(text)}`);
+  }
+  return parseId(text, url);
+}
+async function getProjectId(apiUrl, project) {
+  const url = `${apiUrl}/project/${encodeURIComponent(project)}`;
+  return readId(await send(url, PUBLIC_REQUEST), url, PUBLIC_REQUEST);
+}
+async function findVersionId(apiUrl, projectId, versionNumber) {
+  const url = `${apiUrl}/project/${encodeURIComponent(projectId)}/version/${encodeURIComponent(versionNumber)}`;
+  const reply = await send(url, PUBLIC_REQUEST);
+  return reply.response.status === NOT_FOUND ? void 0 : readId(reply, url, PUBLIC_REQUEST);
+}
+async function postVersion(apiUrl, token, form) {
+  const url = `${apiUrl}/version`;
+  const init = {
+    method: "POST",
+    headers: { Authorization: token, "User-Agent": USER_AGENT },
+    body: form
+  };
+  return readId(await send(url, init), url, init);
+}
+
+// modrinth/upload/src/upload.ts
+var API_URL = "https://api.modrinth.com/v2";
+var FILE_PART = "file";
+var ENVIRONMENTS2 = {
+  client: "client_only",
+  server: "server_only",
+  both: "client_and_server"
+};
 function readInputs() {
   return { ...readUploadInputs(), versionNumber: getInput("version-number", { required: true }) };
 }
+async function publishVersion(inputs, apiUrl) {
+  const filePath = findSingleFile(inputs.file);
+  const existingId = await findVersionId(apiUrl, inputs.projectId, inputs.versionNumber);
+  if (existingId !== void 0) {
+    warning(`Version ${inputs.versionNumber} already exists as ${existingId}, so nothing was uploaded`);
+    return existingId;
+  }
+  const dependencies = await Promise.all(
+    inputs.dependencies.map(async ({ project, type }) => ({
+      project_id: await getProjectId(apiUrl, project),
+      dependency_type: type
+    }))
+  );
+  const form = new FormData();
+  form.append(
+    "data",
+    JSON.stringify({
+      name: inputs.displayName ?? inputs.versionNumber,
+      version_number: inputs.versionNumber,
+      changelog: inputs.changelog,
+      dependencies,
+      game_versions: inputs.gameVersions,
+      version_type: inputs.releaseType,
+      loaders: inputs.loaders,
+      environment: ENVIRONMENTS2[inputs.environment],
+      featured: false,
+      project_id: inputs.projectId,
+      file_parts: [FILE_PART],
+      primary_file: FILE_PART
+    })
+  );
+  form.append(FILE_PART, new File([await (0, import_promises.readFile)(filePath)], (0, import_node_path2.basename)(filePath)));
+  return postVersion(apiUrl, inputs.token, form);
+}
 async function uploadVersion() {
-  readInputs();
-  throw new Error("modrinth/upload is not implemented yet");
+  const versionId = await publishVersion(readInputs(), API_URL);
+  setOutput("version-id", versionId);
+  info(`Modrinth version ID: ${versionId}`);
 }
 
 // modrinth/upload/src/index.ts
