@@ -12,7 +12,7 @@ inputs:
     required: false
     default: docs/images
   remove-missing:
-    description: Delete gallery images whose titles match no file in the folder, including images added by hand. Deleted images cannot be recovered
+    description: Delete gallery images whose titles match no file in the folder, including images added by hand, and all but the first of any images sharing a title. Deleted images cannot be recovered
     required: false
     default: 'false'
 runs:

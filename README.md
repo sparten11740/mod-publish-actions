@@ -67,7 +67,7 @@ Until a project is public, Modrinth only shows its versions to a token with the 
 - **Order:** images are sorted by file name, and numbers sort as numbers (`2-` before `10-`). The first image is featured.
 - **Titles:** `01-crater-floor.jpg` becomes "Crater floor". Titles identify images between runs, so they must be unique.
 - **Replacing an image:** give the new file a new name and set `remove-missing: true`. Modrinth's documented API has no way to tell that a file with the same name has new contents, so it is left as it is. Modrinth also appears to refuse an image with the same bytes as one already in the gallery, so renaming a file only works with `remove-missing: true`, and two identical files fail.
-- **Removing images:** `remove-missing` is off by default. When on, it deletes every image whose title matches no file, including ones you added by hand, and they can't be recovered, so don't turn it on for a gallery you curated by hand. A folder with no images always fails, so a wrong path can't empty the gallery.
+- **Removing images:** `remove-missing` is off by default. When on, it deletes every image whose title matches no file, including ones you added by hand, plus all but the first of any images that share a title. They can't be recovered, so don't turn it on for a gallery you curated by hand. A folder with no images always fails, so a wrong path can't empty the gallery.
 - **Limits:** images can be at most 5 MiB. Descriptions set on Modrinth are left alone. Videos aren't supported.
 
 ## Development
