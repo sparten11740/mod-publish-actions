@@ -1,0 +1,20 @@
+name: Sync Modrinth gallery
+description: Sync a folder of images to the gallery of a Modrinth project
+inputs:
+  token:
+    description: Modrinth personal access token with the PROJECT_WRITE scope
+    required: true
+  project-id:
+    description: Modrinth project ID or slug
+    required: true
+  images:
+    description: Folder of images to sync
+    required: false
+    default: docs/images
+  remove-missing:
+    description: Delete gallery images that are no longer in the folder
+    required: false
+    default: 'false'
+runs:
+  using: node24
+  main: dist/index.cjs
